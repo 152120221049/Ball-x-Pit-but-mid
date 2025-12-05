@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c927e2e182e3e1240a99065888eab911, type: 3}
+  m_Name: Hamster
+  m_EditorClassIdentifier: 
+  itemName: Hamster
+  projectilePrefab: {fileID: 3802109556579512759, guid: 6affe61d0d6edcb46b97200b292da26a, type: 3}
+  itemIcon: {fileID: -3257515335671204596, guid: a38269c46ca0ced4db9bdd555c8b94c3, type: 3}
+  damage: 15
+  baseCooldown: 0.7
+  budgetCost: 3
+  destroyTimer: 3
+  speed: 25

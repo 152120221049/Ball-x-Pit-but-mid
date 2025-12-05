@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c927e2e182e3e1240a99065888eab911, type: 3}
+  m_Name: TeslaOrb
+  m_EditorClassIdentifier: 
+  itemName: TeslaOrb
+  projectilePrefab: {fileID: 8563278997864507222, guid: 7c063659c073e9541aef2b910513f787, type: 3}
+  itemIcon: {fileID: 8788996360218983808, guid: 9290b888b6de5da4883a23dbbced9014, type: 3}
+  damage: 10
+  baseCooldown: 0.8
+  budgetCost: 4
+  destroyTimer: 3
+  speed: 3

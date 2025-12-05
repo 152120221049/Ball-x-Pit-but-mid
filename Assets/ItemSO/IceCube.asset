@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c927e2e182e3e1240a99065888eab911, type: 3}
+  m_Name: IceCube
+  m_EditorClassIdentifier: 
+  itemName: Ice Cube
+  projectilePrefab: {fileID: 5415597901116731397, guid: e6102f4481d29514489117b2e3d44272, type: 3}
+  itemIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  damage: 5
+  baseCooldown: 0.4
+  budgetCost: 3
+  destroyTimer: 3
+  speed: 10
