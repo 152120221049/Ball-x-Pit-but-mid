@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a030e5afa3cc46c4299052ac53db1be8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 30
+  maxHealth: 10
   currentHealth: 0
   gridWidth: 2
   gridHeight: 2

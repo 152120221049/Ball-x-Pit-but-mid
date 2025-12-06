@@ -34,8 +34,5 @@ public class DifficultyManager : MonoBehaviour
     }
 
     // Düşman Hızı için Çarpan (Can kadar hızlı artmasın, yarısı kadar artsın)
-    public float GetSpeedMultiplier()
-    {
-        return 1f + ((currentDifficultyFactor - 1f) * 0.5f);
-    }
+    
 }

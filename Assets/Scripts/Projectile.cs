@@ -3,39 +3,67 @@
 public class Projectile : MonoBehaviour
 {
     [Header("Ayarlar")]
-    public bool isSingleUse = false; // Tek kullanımlık mı?
+    public bool isSingleUse = false; // Tek kullanımlık mı? (Limon evet, Tesla hayır)
     public ItemData projectileData;
-    public float destroyTimer;
-    public float multiplier = 1f;
+
+    // Artık hasarı dışarıdan (PlayerDataManager'dan) alıp hesaplayacağız
+    [HideInInspector]public float finalDamage;
+    private float destroyTimer;
+
     public void Start()
     {
-        destroyTimer = projectileData.destroyTimer;
-        if(projectileData!= null)
+        if (projectileData != null)
         {
-            float baseDamage = projectileData.damage;
+            destroyTimer = projectileData.destroyTimer > 0 ? projectileData.destroyTimer : 5f; // Güvenlik önlemi
 
-            // 2. LevelManager varsa çarpanı al, yoksa 1 kabul et (Hata vermesin)
-            multiplier = (LevelManager.Instance != null) ? LevelManager.Instance.damageMultiplier : 1f;
+            // --- 1. BASE HASAR HESABI (UPGRADE DAHİL) ---
+            float baseDamage = 0;
+
+            // Eğer DataManager varsa (Oyundaysak), YÜKSELTİLMİŞ hasarı sor
+            if (PlayerDataManager.Instance != null)
+            {
+                // Levelına göre artmış hasarı hesapla
+                baseDamage = PlayerDataManager.Instance.GetModifiedDamage(projectileData);
+            }
+            else
+            {
+                // Yoksa (Test sahnesi) ham hasarı al
+                baseDamage = projectileData.damage;
+            }
+
+            // --- 2. OYUN İÇİ BUFF ÇARPANI ---
+            // Level atlayınca gelen şanslı bufflar (%10 hasar artışı vb.)
+            float levelBuffMultiplier = (LevelManager.Instance != null) ? LevelManager.Instance.damageMultiplier : 1f;
+
+            // --- 3. SONUÇ ---
+            finalDamage = baseDamage * levelBuffMultiplier;
+        }
+        else
+        {
+            Debug.LogError("ProjectileData EKSİK! Lütfen Inspector'dan atayın.");
+            finalDamage = 10f; // Hata vermesin diye varsayılan değer
+        }
+
+        // Eğer mermi tek kullanımlık değilse (Tesla gibi), süre sonunda yok olsun
+        if (!isSingleUse)
+        {
+            Destroy(gameObject, destroyTimer);
         }
     }
+
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // Çarptığımız obje bir düşman mı?
-        // EnemyBase scriptine erişmeye çalışıyoruz
         EnemyBase enemy = collision.gameObject.GetComponent<EnemyBase>();
 
         if (enemy != null)
         {
-            // Hasar ver
-            enemy.TakeDamage(projectileData.damage * multiplier); // Örnek hasar değeri
+            // HESAPLANMIŞ HASARI KULLAN
+            enemy.TakeDamage(finalDamage);
 
-            if(isSingleUse)
+            if (isSingleUse)
             {
-                Destroy(gameObject); // Mermiyi yok et
+                Destroy(gameObject); // Çarpınca yok et
             }
-
         }
-        if(!isSingleUse) {Destroy(gameObject,destroyTimer); }
-
     }
 }

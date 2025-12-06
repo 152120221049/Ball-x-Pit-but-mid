@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+using DG.Tweening;
 public class EnemyBase : MonoBehaviour
 {
     [Header("Statlar")]
@@ -24,12 +24,13 @@ public class EnemyBase : MonoBehaviour
     private bool isFrozen = false;
     private SpriteRenderer spriteRenderer;
     private Color originalColor; // Düşmanın en baştaki orijinal rengi
+    private Vector3 baseScale;
 
     void Start()
     {
         currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
-
+        baseScale = transform.localScale;
         if (spriteRenderer != null)
             originalColor = spriteRenderer.color; // Başlangıç rengini kaydet
 
@@ -38,18 +39,22 @@ public class EnemyBase : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        bool isCritical = false; // Kritik vuruş kontrolü
-
+        bool isCritical = false;
+        transform.DOKill();
+        transform.localScale = baseScale;
+        transform.DOPunchScale(baseScale * 0.3f, 0.2f, 10, 1)
+                 .OnComplete(() => transform.localScale = baseScale);
+        float enhanceMultiplier = (LevelManager.Instance != null) ? LevelManager.Instance.effectEnhance : 1f;
         if (isFrozen)
         {
-            amount *= 3f;
+            amount *= 3.6f;
             isCritical = true; // Kritik vuruş!
             Debug.Log("<color=cyan>KRİTİK HASAR! (Donmuş)</color>");
             BreakFreeze();
         }
         else if (frostStacks > 0)
         {
-            amount *= 1.2f;
+            amount *= 1f+(0.2f*enhanceMultiplier);
         }
 
         currentHealth -= amount;
@@ -96,8 +101,7 @@ public class EnemyBase : MonoBehaviour
         else UpdateVisuals();
     }
 
-    // --- GÖRSEL GÜNCELLEME MERKEZİ ---
-    // Bu fonksiyon tüm renk karmaşasını yönetir
+    
     void UpdateVisuals()
     {
         if (spriteRenderer == null) return;
@@ -128,6 +132,7 @@ public class EnemyBase : MonoBehaviour
     // --- DONMA (FROST) İŞLEMLERİ ---
     public void ApplyFrost(int amount)
     {
+        
         if (isFrozen) return;
 
         frostStacks += amount;
@@ -138,7 +143,7 @@ public class EnemyBase : MonoBehaviour
         }
         else
         {
-            UpdateVisuals(); // Rengi hafif maviye çek
+            UpdateVisuals(); 
         }
     }
 
@@ -148,7 +153,6 @@ public class EnemyBase : MonoBehaviour
         frostStacks = 0;
         Debug.Log("DÜŞMAN DONDU!");
 
-        // Efekt Çıkar
         if (freezeVFXPrefab != null)
         {
             GameObject vfx = Instantiate(freezeVFXPrefab, transform.position, Quaternion.identity);
@@ -156,15 +160,14 @@ public class EnemyBase : MonoBehaviour
             Destroy(vfx, 2f);
         }
 
-        // Hareketi durdurma kodu buraya (EnemyMovement)...
 
-        UpdateVisuals(); // Rengi tam mavi yap
+        UpdateVisuals(); 
     }
 
     void BreakFreeze()
     {
         isFrozen = false;
-        UpdateVisuals(); // Rengi normal hasarlı haline döndür
+        UpdateVisuals(); 
     }
 
     // --- KANAMA (BLEED) İŞLEMLERİ ---

@@ -34,6 +34,22 @@ public class WeaponSystem : MonoBehaviour
 
     void Start()
     {
+        
+        if (PlayerDataManager.Instance != null)
+        {
+           
+            equippedBundles = new List<ItemStack>();
+
+           
+            foreach (ItemStack originalStack in PlayerDataManager.Instance.currentDeck)
+            {
+                
+                ItemStack copiedStack = new ItemStack(originalStack);
+
+                equippedBundles.Add(copiedStack);
+            }
+        }
+
         UpdateVisuals();
         updateVisuals();
 
@@ -93,7 +109,13 @@ public class WeaponSystem : MonoBehaviour
 
 
         float distToHome = Vector3.Distance(transform.position, homeTransform.position);
-        float baseCD = itemToFire.baseCooldown + (distToHome * 0.1f);
+        float statsCD = 0;
+        if (PlayerDataManager.Instance != null)
+            statsCD = PlayerDataManager.Instance.GetModifiedCooldown(itemToFire);
+        else
+            statsCD = itemToFire.baseCooldown;
+
+        float baseCD = statsCD + (distToHome*0.1f);
 
         float reductionFactor = (LevelManager.Instance != null) ? LevelManager.Instance.cooldownReduction : 1f;
         currentCooldown = baseCD / reductionFactor;
@@ -118,7 +140,29 @@ public class WeaponSystem : MonoBehaviour
 
         UpdateVisuals();
     }
+    public void AddTemporaryItem(ItemData item, int amount)
+    {
+        // Varsa üzerine ekle
+        foreach (var stack in equippedBundles)
+        {
+            if (stack.itemData == item)
+            {
+                stack.amount += amount;
+                UpdateVisuals();
+                return;
+            }
+        }
 
+        // Yoksa yeni paket aç
+        ItemStack newStack = new ItemStack();
+        newStack.itemData = item;
+        newStack.amount = amount;
+
+        equippedBundles.Add(newStack);
+        UpdateVisuals();
+
+        Debug.Log($"GEÇİCİ DESTEK: {item.itemName} x{amount} eklendi!");
+    }
     void UpdateVisuals()
     {
         if (equippedBundles.Count == 0) return;

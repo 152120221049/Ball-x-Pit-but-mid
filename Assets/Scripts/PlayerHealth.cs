@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-
+using DG.Tweening;
 public class PlayerHealth : MonoBehaviour
 {
     public static PlayerHealth Instance; // Diğer scriptlerden ulaşmak için
@@ -10,6 +10,7 @@ public class PlayerHealth : MonoBehaviour
     public float maxHealth = 10f;
     public float currentHealth;
     public PauseManager pauseManager;
+    public GameOverManager gameOverManager;
     [Header("iFrame (Hasar Almazlık)")]
     public float invincibilityDuration = 1f; // Hasar aldıktan sonra 1 saniye koruma
     private bool isInvincible = false;
@@ -74,15 +75,13 @@ public class PlayerHealth : MonoBehaviour
         if (healthSlider != null)
         {
             healthSlider.maxValue = maxHealth;
-            healthSlider.value = currentHealth;
+            healthSlider.DOValue(currentHealth, 0.5f);
         }
     }
 
     void Die()
     {
-        Debug.Log("OYUN BİTTİ!");
-        pauseManager.PauseGame();
-        Destroy(gameObject); // Şimdilik karakteri yok et
+        gameOverManager.ShowGameOver();
     }
 
     // --- DÜŞMAN KARAKTERE ÇARPARSA ---

@@ -83,18 +83,10 @@ public class WaveSpawner : MonoBehaviour
             float hpMultiplier = DifficultyManager.Instance.GetHealthMultiplier();
             enemyStats.maxHealth *= hpMultiplier;
             enemyStats.currentHealth = enemyStats.maxHealth; // Canı fulle
-
-            // Eğer üzerinde can yazısı varsa güncellemek için bir fonksiyon çağırabilirsin
-            // enemyStats.UpdateHealthUI(); // (Public ise)
         }
 
         // 2. Hızı Artır
-        EnemyMovement enemyMove = enemy.GetComponent<EnemyMovement>();
-        if (enemyMove != null)
-        {
-            float speedMultiplier = DifficultyManager.Instance.GetSpeedMultiplier();
-            enemyMove.speed *= speedMultiplier;
-        }
+     
     }
     // O bölgeye hayali bir kutu atıp çarpan var mı diye bakar
     bool IsPositionFree(Vector3 centerPos, int width, int height)

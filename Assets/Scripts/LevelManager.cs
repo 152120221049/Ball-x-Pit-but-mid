@@ -14,10 +14,21 @@ public class LevelManager : MonoBehaviour
     public int currentLevel = 1;
     public float currentExp = 0;
     public float targetExp = 100;
+    public float totalKula = 0;
 
-    [Header("Oyuncu Statları (Ödüller)")]
-    public float damageMultiplier = 1.0f;   // Hasar Çarpanı
-    public float cooldownReduction = 1.0f;  // Atış Hızı Çarpanı (1 = %100, 1.2 = %20 daha hızlı)
+    [Header("Oyuncu Statları")]
+    public float damageMultiplier = 1.0f;
+    public float cooldownReduction = 1.0f;
+
+    // --- YENİ EKLENENLER ---
+    [Header("Özel Etki Güçlendirmesi")]
+    // Hamster patlaması, Tesla çarpanı, Buz hasarı buna göre artacak.
+    // 1.0 = Normal (%100), 1.5 = %50 daha güçlü
+    public float effectEnhance = 1.0f;
+
+    [Header("Ödül Ayarları")]
+    public ItemData lemonData; // Hediye edilecek Limon ItemData'sı
+    public GameObject confettiPrefab; // Level atlayınca çıkacak efekt
 
     void Awake()
     {
@@ -30,9 +41,11 @@ public class LevelManager : MonoBehaviour
         UpdateUI();
     }
 
+    [System.Obsolete]
     public void AddExp(float amount)
     {
         currentExp += amount;
+        totalKula += amount;
         if (currentExp >= targetExp)
         {
             LevelUp();
@@ -40,41 +53,67 @@ public class LevelManager : MonoBehaviour
         UpdateUI();
     }
 
+    [System.Obsolete]
     void LevelUp()
     {
         currentExp -= targetExp;
         currentLevel++;
-        targetExp *= 1.2f; // Sonraki level %20 daha zor olsun
+        targetExp *= 1.2f;
 
-        // --- RASTGELE GÜÇLENDİRME (RNG) ---
+        string rewardText = "";
+        bool showConfetti = false;
+
+        // --- ŞANS ÇARKI (RNG) ---
         int roll = Random.Range(0, 100);
-        string upgradeName = "";
 
-        if (roll < 60)
+        // %20 İhtimal: GEÇİCİ LİMON DESTEĞİ
+        if (roll < 20)
         {
-            // %60 İhtimal: HASAR ARTIŞI (%5 - %15 arası)
-            float randomDmg = Random.Range(0.05f, 0.15f);
-            damageMultiplier += randomDmg;
-            upgradeName = $"Hasar +%{Mathf.RoundToInt(randomDmg * 100)}";
+            if (lemonData != null)
+            {
+                // Sahnedeki WeaponSystem'i bul ve limon ekle
+                WeaponSystem ws = FindObjectOfType<WeaponSystem>();
+                if (ws != null) ws.AddTemporaryItem(lemonData, 1);
+
+                rewardText = "BONUS LİMON!";
+                showConfetti = true;
+            }
         }
-        else if (roll < 90)
+        // %40 İhtimal: EFFECT ENHANCE (Tesla, Buz, Hamster güçlenir)
+        else if (roll < 60)
         {
-            // %30 İhtimal: ATIŞ HIZI (%2 - %8 arası)
-            float randomCdr = Random.Range(0.02f, 0.08f);
-            cooldownReduction += randomCdr;
-            upgradeName = $"Atış Hızı +%{Mathf.RoundToInt(randomCdr * 100)}";
+            effectEnhance += 0.2f; // %20 Güçlendir
+            rewardText = "BÜYÜ GÜCÜ ARTTI! (+%20)";
+            showConfetti = true;
         }
+        // %40 İhtimal: KLASİK STATLAR (Hasar veya Hız)
         else
         {
-            // %10 İhtimal: BALLI LOKMA (İkisi Birden)
-            damageMultiplier += 0.10f;
-            cooldownReduction += 0.05f;
-            upgradeName = "SÜPER GÜÇLENDİRME! (Hasar & Hız)";
+            if (Random.value > 0.5f)
+            {
+                damageMultiplier += 0.1f;
+                rewardText = "Hasar Arttı";
+            }
+            else
+            {
+                cooldownReduction += 0.05f;
+                rewardText = "Hız Arttı";
+            }
         }
 
-        Debug.Log($"LEVEL UP! ({currentLevel}) - Kazanılan: {upgradeName}");
+        Debug.Log($"LEVEL {currentLevel}: {rewardText}");
 
-        // Eğer exp çok geldiyse tekrar kontrol et
+        // --- KONFETİ EFEKTİ ---
+        if (showConfetti && confettiPrefab != null)
+        {
+            // Oyuncunun üzerinde patlat
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                Instantiate(confettiPrefab, player.transform.position, Quaternion.identity);
+            }
+        }
+
         if (currentExp >= targetExp) LevelUp();
     }
 
@@ -88,6 +127,16 @@ public class LevelManager : MonoBehaviour
         if (levelText != null)
         {
             levelText.text = "Lvl " + currentLevel;
+        }
+    }
+    public void CashOutXP()
+    {
+        int totalReward = (int)totalKula; // Örnek formül
+
+        if (PlayerDataManager.Instance != null)
+        {
+            PlayerDataManager.Instance.AddBankedXP(totalReward);
+            Debug.Log($"KASAYA EKLENEN XP: {totalReward}");
         }
     }
 }

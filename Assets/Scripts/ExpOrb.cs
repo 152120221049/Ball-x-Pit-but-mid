@@ -12,7 +12,8 @@ public class ExpOrb : MonoBehaviour
 
     private Transform playerTransform;
     private bool isMagnetized = false; // Çekim başladı mı?
-
+    public bool useScatterEffect = true; // Sıçrama olsun mu?
+    public float scatterForce = 3f;      // Ne kadar uzağa fırlasın?
     void Start()
     {
         // Oyuncuyu Tag ile bul (PlayerHealth.Instance üzerinden de bulabiliriz)
@@ -21,8 +22,32 @@ public class ExpOrb : MonoBehaviour
         {
             playerTransform = playerObj.transform;
         }
+        if (useScatterEffect)
+        {
+            ApplyScatter();
+        }
     }
+    void ApplyScatter()
+    {
+        // Rastgele bir yön belirle (360 derece)
+        Vector2 randomDirection = Random.insideUnitCircle.normalized;
 
+        // Hafif rastgele bir güç belirle
+        float force = Random.Range(scatterForce * 0.5f, scatterForce);
+
+        // Rigidbody varsa fiziksel fırlat, yoksa pozisyon kaydır (Tween ile)
+        // Senin ExpOrb'unda Rigidbody2D olduğunu varsayıyorum (Gravity 0.5 demiştik)
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+
+        if (rb != null)
+        {
+            // Patlama gibi fırlat
+            rb.AddForce(randomDirection * force, ForceMode2D.Impulse);
+
+            // Fırladıktan kısa süre sonra durmasını sağlamak için Linear Drag'ı artırabilirsin
+            // rb.drag = 2f; 
+        }
+    }
     void Update()
     {
         if (playerTransform == null) return;

@@ -16,28 +16,38 @@ public abstract class ProjectileEffects : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
 
-        // 1. BASE STATLARI HESAPLA
         if (projectileData != null)
         {
-            float baseDamage = projectileData.damage;
-            float speed = projectileData.speed; // Veya projectileData.speed
+            // 1. HIZ HESABI (Cooldown Reduction hızı etkilemez, sadece atış sıklığını etkiler)
+            float speed = projectileData.speed;
 
-            // 2. LEVEL ÇARPANI (LevelManager varsa al, yoksa 1)
+            // --- HASAR HESABI (KRİTİK BÖLGE) ---
+            float baseDamage = 0;
+
+            // Eğer DataManager varsa (Oyundaysak), YÜKSELTİLMİŞ hasarı sor
+            if (PlayerDataManager.Instance != null)
+            {
+                baseDamage = PlayerDataManager.Instance.GetModifiedDamage(projectileData);
+                // Debug.Log($"Modifiye Hasar Alındı: {baseDamage} (Level: {PlayerDataManager.Instance.GetItemLevel(projectileData)})");
+            }
+            else
+            {
+                // Yoksa (Test) düz hasarı al
+                baseDamage = projectileData.damage;
+            }
+
+            // 2. Level Çarpanı (Oyun içi Bufflar) ile çarp
             float levelMultiplier = (LevelManager.Instance != null) ? LevelManager.Instance.damageMultiplier : 1f;
 
-            // 3. FİNAL HASARI BELİRLE
             finalDamage = baseDamage * levelMultiplier;
+            // -----------------------------------
 
-            // Hızı Ayarla
             if (rb != null) rb.linearVelocity = transform.right * speed;
-
-            // Ömrünü ayarla (Veride varsa onu kullan, yoksa 5sn)
-            // Destroy(gameObject, projectileData.destroyTimer > 0 ? projectileData.destroyTimer : 5f);
         }
         else
         {
-            Debug.LogError("ProjectileData Eksik! Lütfen Inspector'dan atama yapın.");
-            finalDamage = 10f; // Fallback değer
+            // Eğer veri yoksa hata vermemesi için
+            finalDamage = 10f;
         }
     }
 
@@ -127,7 +137,7 @@ public abstract class ProjectileEffects : MonoBehaviour
         target.ApplyFrost(power);
     }
 
-protected List<EnemyBase> ExecuteZap(float range, float ratio, Dictionary<GameObject, float> cooldownList, float cooldownTime, GameObject specificVFX)
+    protected List<EnemyBase> ExecuteZap(float range, float ratio, Dictionary<GameObject, float> cooldownList, float cooldownTime, GameObject specificVFX)
     {
         List<EnemyBase> zappedEnemies = new List<EnemyBase>();
 
@@ -143,26 +153,27 @@ protected List<EnemyBase> ExecuteZap(float range, float ratio, Dictionary<GameOb
                 EnemyBase enemyScript = col.GetComponent<EnemyBase>();
                 if (enemyScript != null)
                 {
-                    enemyScript.TakeDamage(projectileData.damage * ratio);
+                    // --- BURASI ÇOK ÖNEMLİ ---
+                    // 'finalDamage' değişkeni Start() fonksiyonunda PlayerDataManager'dan çekilip hesaplanmıştı.
+                    // Burada onu kullanıyoruz. (Örn: Lvl 5 ise 50 hasar * 0.5 ratio = 25 vurur)
+
+                    float damageToDeal = finalDamage * ratio;
+                    enemyScript.TakeDamage(damageToDeal);
+                    // -------------------------
+
                     cooldownList[enemyObj] = Time.time + cooldownTime;
                     zappedEnemies.Add(enemyScript);
 
-                    // --- GÖRSEL KISIM BURADA DEĞİŞTİ ---
+                    // Görsel Efekt (LightningBolt)
                     if (specificVFX != null)
                     {
-                        // Efekti merminin merkezinde oluştur
-                        GameObject boltObj = Instantiate(specificVFX, transform.position, Quaternion.identity);
-
-                        // Efektin içindeki LightningVisual scriptini al
-                        LightningVisual visual = boltObj.GetComponent<LightningVisual>();
-
+                        GameObject bolt = Instantiate(specificVFX, transform.position, Quaternion.identity);
+                        LightningVisual visual = bolt.GetComponent<LightningVisual>();
                         if (visual != null)
                         {
-                            // Ona "Buradan (Benim konumum) -> Oraya (Düşman konumu)" çiz diyoruz
                             visual.Zap(transform.position, enemyObj.transform.position);
                         }
                     }
-                    // ------------------------------------
                 }
             }
         }

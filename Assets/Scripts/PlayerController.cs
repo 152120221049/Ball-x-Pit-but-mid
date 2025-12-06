@@ -3,14 +3,21 @@ using UnityEngine.EventSystems;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Ayarlar")]
+    [Header("Hareket Ayarları")]
     public float moveSpeed = 5f;
-    public float turnSpeed = 15f;
+    public float turnSpeed = 720f;
 
-    public float rotationOffset = 0f; 
-    [Header("Nişan Sınırları")]
-    public float minAimAngle = 20f;  
-    public float maxAimAngle = 160f; 
+    [Range(0f, 0.5f)]
+    public float movementSmoothing = 0.1f;
+
+    [Header("Görsel Ayarlar (Juice)")]
+    public float bobbingSpeed = 15f;
+    public float bobbingAmount = 0.1f;
+    public float rotationOffset = -90f;
+
+    [Header("Aim Ayarları")]
+    public float minAimAngle = -10f;
+    public float maxAimAngle = 170f;
 
     [Header("Referanslar")]
     public Transform firePoint;
@@ -20,7 +27,9 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb;
     private Vector2 moveInput;
-    private bool isAiming = false;
+    private bool inAimMode = false;
+
+    private Vector2 currentVelocityRef;
 
     void Start()
     {
@@ -30,30 +39,24 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        float horizontal = movementJoystick.Horizontal;
-        float vertical = movementJoystick.Vertical;
+        ReadMovementInput();
+        ReadAimInput();
 
-        if (horizontal == 0 && vertical == 0)
-        {
-            horizontal = Input.GetAxis("Horizontal");
-            vertical = Input.GetAxis("Vertical");
-        }
-
-        moveInput = new Vector2(horizontal, vertical);
+        bool isMoving = moveInput.magnitude > 0.1f;
 
         if (animator != null)
-        {
-            bool isMoving = moveInput.magnitude > 0.1f;
             animator.SetBool("isWalking", isMoving);
-        }
 
-        isAiming = Input.GetMouseButton(0) && !IsPointerOverUI();
+        HandleBobbing(isMoving);
 
-        if (isAiming)
+        // --- ROTATION ---
+        if (inAimMode)
         {
             HandleAimingRotation();
+            return;  // Movement rotasyonunu tamamen engelliyoruz
         }
-        else if (moveInput.magnitude > 0.1f)
+
+        if (isMoving)
         {
             HandleMovementRotation();
         }
@@ -61,58 +64,111 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        rb.linearVelocity = moveInput * moveSpeed;
+        Vector2 targetVelocity = moveInput * moveSpeed;
+        rb.linearVelocity = Vector2.SmoothDamp(rb.linearVelocity, targetVelocity, ref currentVelocityRef, movementSmoothing);
     }
 
+    // -----------------------------------------------------
+    //                    MOVEMENT INPUT
+    // -----------------------------------------------------
+    void ReadMovementInput()
+    {
+        float h = movementJoystick.Horizontal;
+        float v = movementJoystick.Vertical;
+
+        if (Mathf.Abs(h) < 0.01f && Mathf.Abs(v) < 0.01f)
+        {
+            // PC test inputu
+            h = Input.GetAxis("Horizontal");
+            v = Input.GetAxis("Vertical");
+        }
+
+        moveInput = new Vector2(h, v);
+
+        // deadzone
+        if (moveInput.magnitude < 0.1f)
+            moveInput = Vector2.zero;
+        else
+            moveInput = moveInput.normalized;
+    }
+
+    // -----------------------------------------------------
+    //                     AIM INPUT
+    // -----------------------------------------------------
+    void ReadAimInput()
+    {
+        // Mouse veya dokunma başladı → aim mode ON
+        if (Input.GetMouseButtonDown(0) && !IsPointerOverUI())
+            inAimMode = true;
+
+        // Parmak/mouse bırakıldı → aim mode OFF
+        if (Input.GetMouseButtonUp(0))
+            inAimMode = false;
+    }
+
+    // -----------------------------------------------------
+    //                MOVEMENT ROTATION
+    // -----------------------------------------------------
     void HandleMovementRotation()
     {
-   
-        if (moveInput.magnitude < 0.15f) return;
+        if (moveInput == Vector2.zero) return;
 
-        Vector3 direction = new Vector3(moveInput.x, moveInput.y, 0);
+        float angle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
 
-        Quaternion targetRotation = Quaternion.LookRotation(Vector3.forward, direction);
+        Quaternion targetRot = Quaternion.Euler(0, 0, angle + rotationOffset);
 
-        if (rotationOffset != 0)
-        {
-            targetRotation *= Quaternion.Euler(0, 0, rotationOffset);
-        }
-
-        visuals.rotation = Quaternion.RotateTowards(visuals.rotation, targetRotation, turnSpeed * Time.deltaTime);
+        visuals.rotation = Quaternion.RotateTowards(
+            visuals.rotation,
+            targetRot,
+            turnSpeed * Time.deltaTime
+        );
     }
 
+    // -----------------------------------------------------
+    //                    AIM ROTATION
+    // -----------------------------------------------------
     void HandleAimingRotation()
     {
-        Vector3 touchPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        touchPos.z = 0;
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0;
 
-        Vector3 aimDirection = touchPos - transform.position;
-       
-        float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+        Vector3 aimDir = mousePos - transform.position;
+        float angle = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
 
-        if (aimDirection.y < 0)
-        {
-            if (aimDirection.x > 0) angle = minAimAngle;
-            else angle = maxAimAngle; 
-        }
-
-       
         float clampedAngle = Mathf.Clamp(angle, minAimAngle, maxAimAngle);
 
-      
+        // Firepoint her zaman aim angle ile döner
         firePoint.rotation = Quaternion.Euler(0, 0, clampedAngle);
 
-      
+        // Aim sırasında visuals sadece firePoint’e göre offsetlenir
         visuals.rotation = Quaternion.Euler(0, 0, clampedAngle + rotationOffset);
     }
 
+    // -----------------------------------------------------
+    //                       BOBBING
+    // -----------------------------------------------------
+    void HandleBobbing(bool isMoving)
+    {
+        if (isMoving)
+        {
+            float bob = Mathf.Sin(Time.time * bobbingSpeed) * bobbingAmount;
+            visuals.localScale = new Vector3(1 + bob, 1 - bob, 1);
+        }
+        else
+        {
+            visuals.localScale = Vector3.Lerp(visuals.localScale, Vector3.one, Time.deltaTime * 10f);
+        }
+    }
+
+    // -----------------------------------------------------
+    //                 UI TOUCH CHECK
+    // -----------------------------------------------------
     bool IsPointerOverUI()
     {
         if (Input.touchCount > 0)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
-                return EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+            Touch t = Input.GetTouch(0);
+            return EventSystem.current.IsPointerOverGameObject(t.fingerId);
         }
         return EventSystem.current.IsPointerOverGameObject();
     }

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement; // Sahne yönetimi için
 using TMPro; // Hız yazısı için (Opsiyonel)
+using DG.Tweening;
 
 public class PauseManager : MonoBehaviour
 {
@@ -14,8 +15,13 @@ public class PauseManager : MonoBehaviour
     [Header("Ayarlar")]
     public float targetGameSpeed = 1f; // Seçilen hız (1x, 2x...)
 
-    // --- HIZ DEĞİŞTİRME ---
-    // Bu fonksiyonu UI'daki 1x, 2x butonlarına bağla
+    
+    void Awake() // Veya Start 1x, 2x but
+    {
+        // Sahne her yüklendiğinde, oyunun "Durmamış" olduğunu garanti et
+        isGamePaused = false;
+        Time.timeScale = 1f;
+    }
     public void SetGameSpeed(float speed)
     {
         targetGameSpeed = speed;
@@ -35,8 +41,7 @@ public class PauseManager : MonoBehaviour
     {
         pauseMenuUI.SetActive(true);
         if (gameInterfaceUI != null) gameInterfaceUI.SetActive(false);
-
-        Time.timeScale = 0f; // Zamanı tamamen durdur
+        Time.timeScale = 0f; 
         isGamePaused = true;
     }
 
@@ -58,7 +63,7 @@ public class PauseManager : MonoBehaviour
         Time.timeScale = 1f; // Hızı normale döndür
         isGamePaused = false;
 
-        // Mevcut sahneyi baştan yükle
+        LevelManager.Instance.CashOutXP();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
@@ -67,9 +72,7 @@ public class PauseManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isGamePaused = false;
-
-        // "MainMenu" adlı sahneyi yükle (Adı neyse onu yazmalısın)
-        // SceneManager.LoadScene("MainMenu"); 
-        Debug.Log("Ana Menüye Dönülüyor...");
+        LevelManager.Instance.CashOutXP();
+        SceneManager.LoadScene("MainMenu");
     }
 }
