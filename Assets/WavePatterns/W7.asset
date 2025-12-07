@@ -13,19 +13,19 @@ MonoBehaviour:
   m_Name: W7
   m_EditorClassIdentifier: 
   enemies:
+  - {fileID: 8383401622737096509, guid: bf3a7f5d90e9ca243ab11cb12a03dd65, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 2903491376567439783, guid: 05e877498e5dc7e419d2965c4fc89777, type: 3}
+  - {fileID: 0}
+  - {fileID: 2903491376567439783, guid: 05e877498e5dc7e419d2965c4fc89777, type: 3}
+  - {fileID: 0}
+  - {fileID: 972611875694244468, guid: 0b1425123d475bf478958add28519a1a, type: 3}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 259814839864610816, guid: 2ef1e352536c885468bedd3f94db1089, type: 3}
   - {fileID: 0}

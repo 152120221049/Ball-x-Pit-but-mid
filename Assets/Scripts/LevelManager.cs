@@ -5,7 +5,7 @@ using TMPro;
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance;
-
+    public PlayerHealth playerHealth;
     [Header("UI Referansları")]
     public Slider expSlider;
     public TextMeshProUGUI levelText;
@@ -62,11 +62,14 @@ public class LevelManager : MonoBehaviour
 
         string rewardText = "";
         bool showConfetti = false;
-
+        
         // --- ŞANS ÇARKI (RNG) ---
         int roll = Random.Range(0, 100);
-
-        // %20 İhtimal: GEÇİCİ LİMON DESTEĞİ
+        if(playerHealth.currentHealth < 10)
+        {
+            playerHealth.Heal(1);
+        }
+        
         if (roll < 20)
         {
             if (lemonData != null)

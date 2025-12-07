@@ -78,7 +78,26 @@ public class PlayerHealth : MonoBehaviour
             healthSlider.DOValue(currentHealth, 0.5f);
         }
     }
+    public void Heal(float amount)
+    {
+        // Canı artır ama Max Canı geçmesin (Kelepçele)
+        currentHealth += amount;
 
+        if (currentHealth > maxHealth)
+        {
+            currentHealth = maxHealth;
+        }
+
+        // UI Güncelle
+        UpdateUI();
+
+        Debug.Log($"CAN KAZANILDI! Yeni Can: {currentHealth}");
+
+        if (healthSlider != null)
+        {
+            healthSlider.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
+        }
+    }
     void Die()
     {
         gameOverManager.ShowGameOver();
