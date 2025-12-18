@@ -182,8 +182,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 10
   currentHealth: 0
-  gridWidth: 2
-  gridHeight: 2
+  gridWidth: 1
+  gridHeight: 1
   damagedColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
   bleedVFXPrefab: {fileID: 213045814976354067, guid: b660bfd1945563645a0eb597025121d3, type: 3}
   freezeVFXPrefab: {fileID: 3052504913079183598, guid: 425066662302b5743957e53fd23fe219, type: 3}

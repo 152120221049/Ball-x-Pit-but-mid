@@ -88,8 +88,10 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < 10; y++) // Örnek olarak 10 satır çizelim
             {
-                Vector3 center = new Vector3(startPoint.x + (x * cellSize), startPoint.y - (y * cellSize), 0);
-                Gizmos.DrawWireCube(center, new Vector3(cellSize, cellSize, 0.1f));
+                Vector3 center = transform.position + new Vector3(x * cellSize, y * cellSize, 0);
+
+                // Kutuyu çiz
+                Gizmos.DrawWireCube(center, new Vector3(cellSize, cellSize, 1));
             }
         }
 

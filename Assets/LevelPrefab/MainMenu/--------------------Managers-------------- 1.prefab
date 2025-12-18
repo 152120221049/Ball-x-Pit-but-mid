@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1792380543581200126
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9158873288965736677}
+  - component: {fileID: 7286994645343233073}
+  - component: {fileID: 4196717081590929073}
+  - component: {fileID: 3896695489720080377}
+  - component: {fileID: 2960001840183819632}
+  m_Layer: 0
+  m_Name: --------------------Managers-------------- 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9158873288965736677
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792380543581200126}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 289.01764, y: 377.23627, z: -1.3371644}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7286994645343233073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792380543581200126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97ae8f3b259c05345b26eec61f5f7262, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playButton: {fileID: 0}
+  deckButton: {fileID: 0}
+  quitButton: {fileID: 0}
+  deckUI: {fileID: 0}
+  mainMenuUI: {fileID: 0}
+  deckMenuManager: {fileID: 4196717081590929073}
+--- !u!114 &4196717081590929073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792380543581200126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26a45ee7b1943d8498b11db5bb5f1099, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotPrefab: {fileID: 230619710354538959, guid: 1041003c6fac4b847ad529466b86fa34, type: 3}
+  deckContainer: {fileID: 0}
+  collectionContainer: {fileID: 0}
+  budgetText: {fileID: 0}
+  MainMenu: {fileID: 0}
+  deckMenu: {fileID: 0}
+  backButton: {fileID: 0}
+--- !u!114 &3896695489720080377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792380543581200126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4d357462cfe8c14496482339622fbb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sanayiPanel: {fileID: 0}
+  mainMenu: {fileID: 0}
+  budgetInfoText: {fileID: 0}
+  bankInfoText: {fileID: 0}
+  budgetCostText: {fileID: 0}
+  bankInfoText2: {fileID: 0}
+  itemsListContent: {fileID: 0}
+  itemSlotPrefab: {fileID: 230619710354538959, guid: 1041003c6fac4b847ad529466b86fa34, type: 3}
+  detailsPanel: {fileID: 0}
+  detailIcon: {fileID: 0}
+  detailNameText: {fileID: 0}
+  detailStatsText: {fileID: 0}
+  itemUpgradeButton: {fileID: 0}
+  itemUpgradeButtonText: {fileID: 0}
+--- !u!114 &2960001840183819632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792380543581200126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ea8699266777324390c07dd6e3ed873, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  allRecipes: []
+  mainMenu: {fileID: 0}
+  mergeMenu: {fileID: 0}
+  slot1Image: {fileID: 0}
+  slot2Image: {fileID: 0}
+  resultImage: {fileID: 0}
+  costText: {fileID: 0}
+  mergeButton: {fileID: 0}
+  inventoryContainer: {fileID: 0}
+  slotPrefab: {fileID: 230619710354538959, guid: 1041003c6fac4b847ad529466b86fa34, type: 3}

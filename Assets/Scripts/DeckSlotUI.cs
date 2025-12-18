@@ -31,7 +31,7 @@ public class DeckSlotUI : MonoBehaviour
 
           
             if (deckIndex != -1)
-                infoText.text = $"{item.itemName}\nx{amount}";
+                infoText.text = $"{item.itemName} x{amount}";
             else
                 infoText.text = item.itemName;
            
@@ -40,7 +40,12 @@ public class DeckSlotUI : MonoBehaviour
         {
             iconImage.enabled = false;
             iconImage.sprite = null;
-            infoText.text = "Boş"; 
+
+            if (infoText != null)
+            {
+                // "Boş" yazmasın, boşluk olsun. Daha temiz durur.
+                infoText.text = "";
+            }
         }
 
         if (selectedBorder != null) selectedBorder.SetActive(false);

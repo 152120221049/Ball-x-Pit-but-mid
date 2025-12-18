@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using DG.Tweening;
+using NUnit.Framework.Interfaces;
+using System.Collections.Generic;
 using TMPro; // Miktar yazısı için (Opsiyonel)
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -30,8 +32,9 @@ public class WeaponSystem : MonoBehaviour
     // Paketin içindeki kaçıncı toptayız? (Yığın sırası)
     private int currentSubIndex = 0;
 
-    private bool isAimingToFire = false;
-
+    private int movementFingerId = -1; // Joystick tutan parmak
+    private int firingFingerId = -1;   // Ateş eden parmak
+    public float aimLockTimer = 0.02f;
     void Start()
     {
         
@@ -39,8 +42,11 @@ public class WeaponSystem : MonoBehaviour
         {
            
             equippedBundles = new List<ItemStack>();
+            foreach (var perk in PlayerDataManager.Instance.equippedPerks)
+            {
+                perk.OnGameStart();
+            }
 
-           
             foreach (ItemStack originalStack in PlayerDataManager.Instance.currentDeck)
             {
                 
@@ -59,30 +65,141 @@ public class WeaponSystem : MonoBehaviour
     {
         if (currentCooldown > 0)
             currentCooldown -= Time.deltaTime;
+        if (aimLockTimer > 0)
+            aimLockTimer -= Time.deltaTime;
+        HandleTouchInput(); // Mobil İçin
 
-        HandleShootingInput();
+#if UNITY_EDITOR
+        HandleMouseInput();
+#endif
     }
 
-    void HandleShootingInput()
+    void HandleTouchInput()
     {
+        if (Input.touchCount > 0)
+        {
+            foreach (Touch touch in Input.touches)
+            {
+                // -- DOKUNMA BAŞLADI --
+                if (touch.phase == TouchPhase.Began)
+                {
+                    // UI / Joystick Kontrolü
+                    if (IsPointerOverUIObject(touch.fingerId))
+                    {
+                        if (movementFingerId == -1)
+                            movementFingerId = touch.fingerId;
+                        if (reticleRenderer != null) reticleRenderer.enabled = false;
+                    }
+                    else
+                    {
+                        // YENİ KONTROL: Eğer Aim Kilidi aktifse, nişan almayı BAŞLATMA!
+                        if (aimLockTimer <= 0f)
+                        {
+                            if (firingFingerId == -1)
+                            {
+                                firingFingerId = touch.fingerId;
+                            }
+                        }
+                    }
+                }
+
+                // -- SÜRÜKLEME --
+                if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+                {
+                    if (touch.fingerId == firingFingerId)
+                    {
+                        if (isAutoFireEnabled && currentCooldown <= 0)
+                        {
+                            FireNextItem();
+                        }
+                    }
+                }
+
+                // -- DOKUNMA BİTTİ --
+                if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                {
+                    // HAREKET PARMAĞI KALKTIYSA
+                    if (touch.fingerId == movementFingerId)
+                    {
+                        movementFingerId = -1;
+
+                        // YENİ: Joystick bırakıldığı an kısa bir süre Aim almayı yasakla!
+                        // Bu, parmağı kaldırırken oluşan titremelerin ateş etmesini engeller.
+                        aimLockTimer = 0.2f; // 0.2 saniyelik kilit (İsteğe göre artır/azalt)
+                        if (reticleRenderer != null) reticleRenderer.enabled = false;
+                    }
+
+                    // ATEŞ PARMAĞI KALKTIYSA
+                    else if (touch.fingerId == firingFingerId)
+                    {
+                        if (!isAutoFireEnabled && currentCooldown <= 0)
+                        {
+                            FireNextItem();
+                        }
+                        firingFingerId = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 2. EDITOR / MOUSE MANTIĞI (Simulator İçin) ---
+    void HandleMouseInput()
+    {
+        // 1. TIKLAMA BAŞLADI (DOWN)
         if (Input.GetMouseButtonDown(0))
         {
-            if (!IsPointerOverUI()) isAimingToFire = true;
-            else isAimingToFire = false;
+            // Eğer UI (Joystick) üzerindeysek -> HAREKET
+            if (EventSystem.current.IsPointerOverGameObject())
+            {
+                movementFingerId = 99; // Mouse hareket kimliği
+                if (reticleRenderer != null) reticleRenderer.enabled = false;
+            }
+            // Değilsek -> ATEŞ (Ama Kilit Süresi dolmuşsa!)
+            else
+            {
+                // YENİ: Aim Kilidi aktifse ateşlemeye başlama
+                if (aimLockTimer <= 0f)
+                {
+                    firingFingerId = 99; // Mouse ateş kimliği
+                }
+            }
         }
 
-        if (Input.GetMouseButtonUp(0))
+        // 2. TIKLAMA SÜRÜYOR (HELD)
+        if (Input.GetMouseButton(0))
         {
-            if (!isAutoFireEnabled && isAimingToFire && currentCooldown <= 0)
+            // Sadece "Ateş Eden Kimlik" biz isek ateş et
+            if (firingFingerId == 99 && isAutoFireEnabled && currentCooldown <= 0)
             {
                 FireNextItem();
             }
-            isAimingToFire = false;
         }
 
-        if (isAutoFireEnabled && isAimingToFire && Input.GetMouseButton(0))
+        // 3. TIKLAMA BİTTİ (UP)
+        if (Input.GetMouseButtonUp(0))
         {
-            if (currentCooldown <= 0) FireNextItem();
+            // Eğer HAREKET (Joystick) bırakıldıysa -> KİLİDİ DEVREYE SOK
+            if (movementFingerId == 99)
+            {
+                aimLockTimer = 0.2f; // 0.2 saniye boyunca ateş edilemez
+                if (reticleRenderer != null) reticleRenderer.enabled = false;
+                movementFingerId = -1;
+            }
+
+            // Eğer ATEŞ bırakıldıysa -> ATEŞ ET (AutoFire kapalıysa)
+            else if (firingFingerId == 99)
+            {
+                if (!isAutoFireEnabled && currentCooldown <= 0)
+                {
+                    FireNextItem();
+                }
+                firingFingerId = -1;
+            }
+
+            // Her ihtimale karşı ID'leri temizle
+            if (movementFingerId == 99) movementFingerId = -1;
+            if (firingFingerId == 99) firingFingerId = -1;
         }
     }
 
@@ -96,8 +213,12 @@ public class WeaponSystem : MonoBehaviour
         ItemData itemToFire = currentStack.itemData;
 
      
+        
         GameObject projectile = Instantiate(itemToFire.projectilePrefab, firePoint.position, firePoint.rotation);
-
+        if (itemToFire.shootSound != null)
+        {
+            AudioManager.Instance.PlayShootSound(itemToFire.shootSound);
+        }
         Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
         if (rb != null) rb.linearVelocity = firePoint.right * itemToFire.speed;
 
@@ -142,26 +263,46 @@ public class WeaponSystem : MonoBehaviour
     }
     public void AddTemporaryItem(ItemData item, int amount)
     {
-        // Varsa üzerine ekle
-        foreach (var stack in equippedBundles)
+        if (item == null) return;
+
+        // 1. Zaten elimizde var mı? (Listeyi index ile geziyoruz)
+        for (int i = 0; i < equippedBundles.Count; i++)
         {
-            if (stack.itemData == item)
+            // ÖNEMLİ: Referans eşitliği yerine itemData eşitliğine bakıyoruz
+            if (equippedBundles[i].itemData == item)
             {
-                stack.amount += amount;
-                UpdateVisuals();
+                equippedBundles[i].amount += amount;
+
+                Debug.Log($"MEVCUT EŞYA ARTTI: {item.itemName} | Yeni Miktar: {equippedBundles[i].amount}");
+
+                // Eğer şu an elimizde tuttuğumuz eşya arttıysa, UI'ı hemen güncelle
+                if (i == currentBundleIndex)
+                {
+                    UpdateVisuals();
+                    // Efekt: Miktar yazısını büyütüp küçült (Juice)
+                    if (stackCountText) stackCountText.transform.DOPunchScale(Vector3.one * 0.5f, 0.2f);
+                }
                 return;
             }
         }
 
-        // Yoksa yeni paket aç
+        // 2. Yoksa listenin sonuna yeni paket ekle
         ItemStack newStack = new ItemStack();
         newStack.itemData = item;
         newStack.amount = amount;
 
         equippedBundles.Add(newStack);
-        UpdateVisuals();
 
-        Debug.Log($"GEÇİCİ DESTEK: {item.itemName} x{amount} eklendi!");
+        Debug.Log($"YENİ PAKET EKLENDİ: {item.itemName} (Sıraya Girdi)");
+
+        // Eğer deste daha önce boştuysa, hemen bu yeni silahı elimize alalım
+        if (equippedBundles.Count == 1)
+        {
+            currentBundleIndex = 0;
+            currentSubIndex = 0;
+        }
+
+        UpdateVisuals();
     }
     void UpdateVisuals()
     {
@@ -193,17 +334,25 @@ public class WeaponSystem : MonoBehaviour
         }
     }
 
-    bool IsPointerOverUI()
+    private bool IsPointerOverUIObject(int fingerId)
     {
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
-                return EventSystem.current.IsPointerOverGameObject(touch.fingerId);
-        }
-        return EventSystem.current.IsPointerOverGameObject();
-    }
+        // EventSystem, belirli bir parmak ID'sinin UI üzerinde olup olmadığını kontrol eder
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
 
+        // Parmağın o anki pozisyonunu bul
+        foreach (Touch t in Input.touches)
+        {
+            if (t.fingerId == fingerId)
+            {
+                eventDataCurrentPosition.position = t.position;
+                break;
+            }
+        }
+
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
+    }
     public void ToggleAutoFire()
     {
         isAutoFireEnabled = !isAutoFireEnabled;

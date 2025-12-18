@@ -14,9 +14,9 @@ GameObject:
   - component: {fileID: 6361801658962453757}
   - component: {fileID: 3778981954715003829}
   - component: {fileID: 5403666644040957632}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Enemy_WideBrick
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -147,7 +147,7 @@ Rigidbody2D:
   m_GameObject: {fileID: 972611875694244468}
   m_BodyType: 1
   m_Simulated: 1
-  m_UseFullKinematicContacts: 0
+  m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0
@@ -178,8 +178,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 20
   currentHealth: 0
-  gridWidth: 4
-  gridHeight: 2
+  gridWidth: 2
+  gridHeight: 1
   damagedColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
   bleedVFXPrefab: {fileID: 213045814976354067, guid: b660bfd1945563645a0eb597025121d3, type: 3}
   freezeVFXPrefab: {fileID: 3052504913079183598, guid: 425066662302b5743957e53fd23fe219, type: 3}

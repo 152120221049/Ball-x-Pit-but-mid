@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a287eb73a4191d42b1689cbf40eba3f, type: 3}
+  m_Name: Lvl2
+  m_EditorClassIdentifier: 
+  levelName: Seviye 2
+  description: First Actual Lvl
+  lvlImage: {fileID: 0}
+  backgroundColor: {r: 0.7554184, g: 1, b: 0.740566, a: 1}
+  wavePatterns:
+  - {fileID: 11400000, guid: 045befd910ecb5b449c73646ebba7988, type: 2}
+  - {fileID: 11400000, guid: 6e9dce1e94717fe41bd8cc8810327ac7, type: 2}
+  - {fileID: 11400000, guid: 59a21166303ac0544800675031272ad1, type: 2}
+  - {fileID: 11400000, guid: aa8d3d01615431e4686e92691039d59e, type: 2}
+  - {fileID: 11400000, guid: 940be1fdf495be246ac0791d03d2611b, type: 2}
+  totalWaves: 250
+  difficultyMultiplier: 1

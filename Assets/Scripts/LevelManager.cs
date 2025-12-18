@@ -59,55 +59,28 @@ public class LevelManager : MonoBehaviour
         currentExp -= targetExp;
         currentLevel++;
         targetExp *= 1.2f;
-
-        string rewardText = "";
-        bool showConfetti = false;
-        
-        // --- ŞANS ÇARKI (RNG) ---
-        int roll = Random.Range(0, 100);
-        if(playerHealth.currentHealth < 10)
+        if (PlayerDataManager.Instance != null)
         {
-            playerHealth.Heal(1);
-        }
-        
-        if (roll < 20)
-        {
-            if (lemonData != null)
+            foreach (PerkBase perk in PlayerDataManager.Instance.equippedPerks)
             {
-                // Sahnedeki WeaponSystem'i bul ve limon ekle
-                WeaponSystem ws = FindObjectOfType<WeaponSystem>();
-                if (ws != null) ws.AddTemporaryItem(lemonData, 1);
-
-                rewardText = "BONUS LİMON!";
-                showConfetti = true;
+                // Her takılı perkin 'Level Atladı' fonksiyonunu çalıştır
+                perk.OnLevelUp();
             }
         }
-        // %40 İhtimal: EFFECT ENHANCE (Tesla, Buz, Hamster güçlenir)
-        else if (roll < 60)
-        {
-            effectEnhance += 0.2f; // %20 Güçlendir
-            rewardText = "BÜYÜ GÜCÜ ARTTI! (+%20)";
-            showConfetti = true;
-        }
-        // %40 İhtimal: KLASİK STATLAR (Hasar veya Hız)
-        else
-        {
-            if (Random.value > 0.5f)
+
+
+        if (Random.value > 0.5f)
             {
                 damageMultiplier += 0.1f;
-                rewardText = "Hasar Arttı";
+                
             }
             else
             {
                 cooldownReduction += 0.05f;
-                rewardText = "Hız Arttı";
+               
             }
-        }
-
-        Debug.Log($"LEVEL {currentLevel}: {rewardText}");
-
-        // --- KONFETİ EFEKTİ ---
-        if (showConfetti && confettiPrefab != null)
+        
+        if (confettiPrefab != null)
         {
             // Oyuncunun üzerinde patlat
             GameObject player = GameObject.FindGameObjectWithTag("Player");

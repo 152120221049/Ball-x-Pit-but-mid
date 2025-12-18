@@ -2,48 +2,32 @@
 
 public class SafeArea : MonoBehaviour
 {
-    private RectTransform rectTransform;
-    private Rect currentSafeArea = new Rect();
-    private ScreenOrientation currentOrientation = ScreenOrientation.AutoRotation;
+    RectTransform myRect;
 
     void Awake()
     {
-        rectTransform = GetComponent<RectTransform>();
+        myRect = GetComponent<RectTransform>();
         Refresh();
-    }
-
-    void Update()
-    {
-        // Ekran döndürülürse veya güvenli alan değişirse güncelle
-        if ((currentOrientation != Screen.orientation) || (currentSafeArea != Screen.safeArea))
-        {
-            Refresh();
-        }
     }
 
     void Refresh()
     {
-        currentSafeArea = Screen.safeArea;
-        currentOrientation = Screen.orientation;
-        ApplySafeArea();
-    }
-
-    void ApplySafeArea()
-    {
-        if (rectTransform == null) return;
-
         Rect safeArea = Screen.safeArea;
+        Rect pixelRect = new Rect(0, 0, Screen.width, Screen.height); // Tam ekran
 
-        // Ekranın tam boyutuna göre oranla
+        // Safe Area'yı Anchor pozisyonuna çevir
         Vector2 anchorMin = safeArea.position;
         Vector2 anchorMax = safeArea.position + safeArea.size;
 
-        anchorMin.x /= Screen.width;
-        anchorMin.y /= Screen.height;
-        anchorMax.x /= Screen.width;
-        anchorMax.y /= Screen.height;
+        anchorMin.x /= pixelRect.width;
+        anchorMin.y /= pixelRect.height;
+        anchorMax.x /= pixelRect.width;
+        anchorMax.y /= pixelRect.height;
 
-        rectTransform.anchorMin = anchorMin;
-        rectTransform.anchorMax = anchorMax;
+        // Uygula
+        myRect.anchorMin = anchorMin;
+        myRect.anchorMax = anchorMax;
+
+        // Debug.Log($"Safe Area Uygulandı: {anchorMin} - {anchorMax}");
     }
 }

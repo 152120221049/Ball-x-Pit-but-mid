@@ -11,7 +11,6 @@ public class HomeBase : MonoBehaviour
             
             if (pluh != null)
             {
-                
                 pluh.TakeDamage(1f);
             }
 

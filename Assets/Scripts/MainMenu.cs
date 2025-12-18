@@ -11,8 +11,10 @@ public class MainMenu : MonoBehaviour
     [Header("Paneller")]
     public GameObject deckUI;
     public GameObject mainMenuUI;
-
-    
+    public DeckMenuManager deckMenuManager;
+    public GameObject PerkUI;
+    public GameObject settingsUI;
+    public GameObject ClickBlock;
 
     void Start()
     {
@@ -20,7 +22,12 @@ public class MainMenu : MonoBehaviour
         GameObject deckObj = GameObject.Find("DeckButton");
         GameObject quitObj = GameObject.Find("Quit Button");
 
-        // 1. OYNA BUTONU
+        
+        if (AudioManager.Instance != null)
+        {
+        AudioManager.Instance.PlayMenuMusic();
+        }
+        
         if (playButton != null)
         {
             playButton.onClick.RemoveAllListeners();
@@ -31,7 +38,7 @@ public class MainMenu : MonoBehaviour
             Debug.LogError("HATA: 'Play Button' Inspector'da atanmamış veya kayıp!");
         }
 
-        // 2. DESTE BUTONU
+        
         if (deckButton != null)
         {
             deckButton.onClick.RemoveAllListeners();
@@ -42,7 +49,7 @@ public class MainMenu : MonoBehaviour
             Debug.LogWarning("UYARI: 'Deck Button' atanmamış.");
         }
 
-        // 3. ÇIKIŞ BUTONU
+       
         if (quitButton != null)
         {
             quitButton.onClick.RemoveAllListeners();
@@ -62,6 +69,18 @@ public class MainMenu : MonoBehaviour
     {
         mainMenuUI.SetActive(false);
         deckUI.SetActive(true);
+        deckMenuManager.RefreshUI();
+    }
+    public void OpenSettings(bool isActive)
+    {
+        settingsUI.SetActive(isActive);
+        ClickBlock.SetActive(isActive);
+        
+    }
+    public void TogglePerk(bool isActive)
+    {
+        PerkUI.SetActive(isActive);
+        mainMenuUI.SetActive(!isActive);
     }
     public void QuitGame()
     {

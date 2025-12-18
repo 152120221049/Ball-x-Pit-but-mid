@@ -4,112 +4,183 @@ using UnityEngine;
 public class WaveSpawner : MonoBehaviour
 {
     [Header("Ayarlar")]
+    // Bu liste GameProgressionManager tarafından otomatik doldurulur.
+    // Ama test için elle de doldurabilirsin.
     public List<WavePattern> patterns;
     public float timeBetweenWaves = 5f;
-    public LayerMask enemyLayer; // "Enemy" layerını buradan seçeceksin
+    public LayerMask enemyLayer; // "Enemy" layerı seçili olmalı!
 
+    [Header("Seviye Ayarları")]
+    public int totalWavesInLevel = 5; // Bu seviye kaç dalga sürecek?
+
+    [Header("Görsel")]
+    public SpriteRenderer backgroundRenderer; // Sahne arkaplanı (Levela göre renk değişimi için)
+
+    // Değişkenler
+    private int wavesSpawnedCount = 0;
     private float countdown = 2f;
+    private bool levelIsOver = false;
+
+    void Start()
+    {
+        
+        if (ProgressionManager.Instance != null)
+        {
+            LevelData data = ProgressionManager.Instance.GetCurrentLevelData();
+
+            if (data != null)
+            {
+                // 1. Düşman Desenlerini Al
+                this.patterns = data.wavePatterns;
+
+                // 2. Dalga Sayısını Al
+                this.totalWavesInLevel = data.totalWaves;
+
+                // 3. Arka Plan Rengini Değiştir
+                if (backgroundRenderer != null)
+                {
+                    backgroundRenderer.color = data.backgroundColor;
+                }
+
+                Debug.Log($"LEVEL YÜKLENDİ: {data.levelName} (Zorluk: {data.difficultyMultiplier}x)");
+
+                // İstersen DifficultyManager'a levelın zorluk çarpanını da gönderebilirsin
+                // DifficultyManager.Instance.currentDifficultyFactor = data.difficultyMultiplier;
+            }
+        }
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayBattleMusic();
+        }
+    }
 
     void Update()
     {
-        if (countdown <= 0f)
+        if (levelIsOver) return;
+
+        
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            SpawnRandomPattern();
-            float difficulty = (DifficultyManager.Instance != null) ? DifficultyManager.Instance.currentDifficultyFactor : 1f;
-            countdown = timeBetweenWaves / difficulty;
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+            Debug.Log($"RAPOR: Atılan Dalga: {wavesSpawnedCount}/{totalWavesInLevel} | Kalan Düşman: {enemies.Length}");
+            foreach (var e in enemies) Debug.LogWarning($"DÜŞMAN BULUNDU: {e.name}");
         }
-        countdown -= Time.deltaTime;
+        
+
+        // --- 1. AŞAMA: SPAWN (DOĞURMA) ---
+        if (wavesSpawnedCount < totalWavesInLevel)
+        {
+            if (countdown <= 0f)
+            {
+                SpawnRandomPattern();
+
+                wavesSpawnedCount++;
+
+                // Zorluk arttıkça spawn süresi kısalır
+                float difficulty = (DifficultyManager.Instance != null) ? DifficultyManager.Instance.currentDifficultyFactor : 1f;
+                countdown = timeBetweenWaves / difficulty;
+            }
+            countdown -= Time.deltaTime;
+        }
+        // --- 2. AŞAMA: TEMİZLİK KONTROLÜ ---
+        else
+        {
+            // Dalgalar bitti. Sahnede düşman kaldı mı?
+            // "wavesSpawnedCount > 0" kontrolü, oyun başlar başlamaz bitmesini engeller.
+            if (wavesSpawnedCount > 0 && AreAllEnemiesDead())
+            {
+                LevelComplete();
+            }
+        }
     }
+
     void SpawnRandomPattern()
     {
-        if (patterns.Count == 0) return;
+        if (patterns == null || patterns.Count == 0) return;
 
-        // 1. Rastgele bir desen seç
         int randomIndex = Random.Range(0, patterns.Count);
         WavePattern pattern = patterns[randomIndex];
 
-        // Grid'i sanal olarak temizle
         if (GridManager.Instance != null) GridManager.Instance.ClearGrid();
 
-        // Desendeki her slotu gez
         for (int col = 0; col < pattern.enemies.Length; col++)
         {
             GameObject enemyObj = pattern.enemies[col];
 
-            // Eğer bu slotta bir düşman tanımlıysa
             if (enemyObj != null)
             {
                 EnemyBase enemyScript = enemyObj.GetComponent<EnemyBase>();
-
                 if (enemyScript != null)
                 {
                     int width = enemyScript.gridWidth;
                     int height = enemyScript.gridHeight;
 
-                    // A. GridManager'a sor: Matematiksel olarak sığıyor muyum?
+                    // 1. Grid Kontrolü
                     if (GridManager.Instance.CanSpawnAt(col, 0, width, height))
                     {
                         Vector3 spawnPos = GridManager.Instance.GetWorldPosition(col, 0, width, height);
 
-                        // B. Fiziksel Kontrol: Doğacağım yerde yaşayan bir düşman var mı?
+                        // 2. Fiziksel Kontrol (İç içe geçmeyi önler)
                         if (IsPositionFree(spawnPos, width, height))
                         {
-                            // Düşmanı Oluştur
                             GameObject newEnemy = Instantiate(enemyObj, spawnPos, Quaternion.identity);
 
-                            // C. Düşmanı Güçlendir (Zorluk Çarpanı)
+                            // 3. Güçlendirme Uygula
                             ApplyDifficultyScaling(newEnemy);
 
-                            // Grid'i işgal et
                             GridManager.Instance.OccupyGrid(col, 0, width, height);
-                        }
-                        else
-                        {
-                            // Debug.LogWarning($"Yer dolu! (Fiziksel Çakışma) Sütun: {col}");
                         }
                     }
                 }
             }
         }
     }
+
+    bool AreAllEnemiesDead()
+    {
+        // Sahnede "Enemy" etiketli obje var mı?
+        return GameObject.FindGameObjectWithTag("Enemy") == null;
+    }
+
+    void LevelComplete()
+    {
+        Debug.Log("SEVİYE TAMAMLANDI! Zafer Ekranı Açılıyor...");
+        levelIsOver = true;
+
+        if (GameOverManager.Instance != null)
+        {
+            // TRUE = Zafer (Yeşil Ekran)
+            GameOverManager.Instance.ShowResult(true);
+        }
+    }
+
+    bool IsPositionFree(Vector3 centerPos, int width, int height)
+    {
+        // GridManager yoksa varsayılan boyut kullan
+        float cellSize = (GridManager.Instance != null) ? GridManager.Instance.cellSize : 1.5f;
+
+        Vector2 boxSize = new Vector2(
+            width * cellSize * 0.9f,
+            height * cellSize * 0.9f
+        );
+
+        Collider2D hit = Physics2D.OverlapBox(centerPos, boxSize, 0f, enemyLayer);
+        return hit == null;
+    }
+
     void ApplyDifficultyScaling(GameObject enemy)
     {
         if (DifficultyManager.Instance == null) return;
 
-        // 1. Canı Artır
         EnemyBase enemyStats = enemy.GetComponent<EnemyBase>();
         if (enemyStats != null)
         {
             float hpMultiplier = DifficultyManager.Instance.GetHealthMultiplier();
             enemyStats.maxHealth *= hpMultiplier;
-            enemyStats.currentHealth = enemyStats.maxHealth; // Canı fulle
+            enemyStats.currentHealth = enemyStats.maxHealth;
+
+            
         }
 
-        // 2. Hızı Artır
-     
-    }
-    // O bölgeye hayali bir kutu atıp çarpan var mı diye bakar
-    bool IsPositionFree(Vector3 centerPos, int width, int height)
-    {
-        // Kutunun boyutu (Grid boyutuna göre)
-        // Biraz küçültüyoruz (0.9f) ki yanındaki düşmana yanlışlıkla değmesin.
-        Vector2 boxSize = new Vector2(
-            width * GridManager.Instance.cellSize * 0.9f,
-            height * GridManager.Instance.cellSize * 0.9f
-        );
-
-        // Physics2D.OverlapBox ile o bölgeyi tara
-        Collider2D hit = Physics2D.OverlapBox(centerPos, boxSize, 0f, enemyLayer);
-
-        // Eğer 'hit' null ise orası boştur, true döner.
-        // Eğer bir şeye çarptıysa doludur, false döner.
-        return hit == null;
-    }
-
-    // Alanı görmek için (Debug)
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        // Gizmo çizimi sadece runtime'da çalışır çünkü GridManager.Instance lazım
     }
 }

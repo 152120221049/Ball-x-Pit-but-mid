@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a287eb73a4191d42b1689cbf40eba3f, type: 3}
+  m_Name: Lvl3
+  m_EditorClassIdentifier: 
+  levelName: Seviye 3
+  description: "Art\u0131k Perklere bir bak hac\u0131"
+  lvlImage: {fileID: 0}
+  backgroundColor: {r: 1, g: 0.6933962, b: 0.6994081, a: 1}
+  wavePatterns:
+  - {fileID: 11400000, guid: 307a34c7dee1fbc4996715f7b102a73f, type: 2}
+  - {fileID: 11400000, guid: d721c1336156fe5479079d985850bf23, type: 2}
+  - {fileID: 11400000, guid: 491698fd63b5e514eb974632f709c5da, type: 2}
+  - {fileID: 11400000, guid: 33bab01b1c921be428612c182d83c2c8, type: 2}
+  - {fileID: 11400000, guid: 3c84d30861d9d7649b7e6d4586577472, type: 2}
+  totalWaves: 300
+  difficultyMultiplier: 1

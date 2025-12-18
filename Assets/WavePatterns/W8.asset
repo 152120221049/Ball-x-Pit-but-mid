@@ -14,18 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemies:
   - {fileID: 7757277700618605174, guid: 8200ae9e49cc65242a85b3c66ddbc59f, type: 3}
-  - {fileID: 0}
   - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}
-  - {fileID: 0}
   - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}
-  - {fileID: 0}
   - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}
-  - {fileID: 0}
   - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}
-  - {fileID: 0}
   - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}
-  - {fileID: 0}
   - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}
-  - {fileID: 0}
-  - {fileID: 7757277700618605174, guid: 8200ae9e49cc65242a85b3c66ddbc59f, type: 3}
-  - {fileID: 0}
+  - {fileID: 3389663877274273910, guid: f812dc06c9842124f9d4324d52276d13, type: 3}

@@ -100,7 +100,7 @@ public class PlayerHealth : MonoBehaviour
     }
     void Die()
     {
-        gameOverManager.ShowGameOver();
+        gameOverManager.ShowResult(false);
     }
 
     // --- DÜŞMAN KARAKTERE ÇARPARSA ---

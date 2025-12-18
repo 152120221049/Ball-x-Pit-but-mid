@@ -53,7 +53,7 @@ public class UpgradeManager : MonoBehaviour
         foreach (Transform child in itemsListContent) Destroy(child.gameObject);
 
         // Tüm eşyaları diz
-        foreach (ItemData item in PlayerDataManager.Instance.allUnlockedItems)
+        foreach (ItemData item in PlayerDataManager.Instance.unlockedItemsPool)
         {
             GameObject slot = Instantiate(itemSlotPrefab, itemsListContent);
 
@@ -91,7 +91,7 @@ public class UpgradeManager : MonoBehaviour
         float nextDmg = selectedItem.damage * (1f + (selectedItem.damageGrowthPercent * currentLvl)); // lvl yerine lvl+1 mantığı (lvl zaten 1 tabanlı)
 
         int cost = PlayerDataManager.Instance.GetUpgradeCost(selectedItem);
-        int playerMoney = PlayerDataManager.Instance.SariKulaReserves;
+        int playerMoney = PlayerDataManager.Instance.BankedXp;
 
         // Görselleri Bas
         detailIcon.sprite = selectedItem.itemIcon;
@@ -135,7 +135,7 @@ public class UpgradeManager : MonoBehaviour
     }
     public void TryBuyBudget()
     {
-        int cost = PlayerDataManager.Instance.geliştirmeMasrafi;
+        int cost = PlayerDataManager.Instance.currentBudgetUpgradeCost;
 
         // Parayı çekmeye çalış
         if (PlayerDataManager.Instance.TrySpendXP(cost))
@@ -163,8 +163,8 @@ public class UpgradeManager : MonoBehaviour
         if (PlayerDataManager.Instance == null) return;
 
         budgetInfoText.text = $"Mevcut bütçe = {PlayerDataManager.Instance.maxBudget}";
-        bankInfoText.text = $"= {PlayerDataManager.Instance.SariKulaReserves}";
-        budgetCostText.text = $"= {PlayerDataManager.Instance.geliştirmeMasrafi} ";
-        bankInfoText2.text = $"= {PlayerDataManager.Instance.SariKulaReserves}";
+        bankInfoText.text = $" {PlayerDataManager.Instance.BankedXp}";
+        budgetCostText.text = $"= {PlayerDataManager.Instance.currentBudgetUpgradeCost} ";
+        
     }
 }

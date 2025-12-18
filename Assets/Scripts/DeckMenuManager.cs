@@ -31,10 +31,15 @@ public class DeckMenuManager : MonoBehaviour
     }
     void OnEnable()
     {
-        
+        // PlayerDataManager hazır mı diye kontrol et
         if (PlayerDataManager.Instance != null)
         {
             RefreshUI();
+        }
+        else
+        {
+          
+            Invoke(nameof(RefreshUI), 0.1f);
         }
     }
 
@@ -59,14 +64,30 @@ public class DeckMenuManager : MonoBehaviour
         }
 
         // 2. KOLEKSİYON SLOTLARI
+        // 2. KOLEKSİYON (ENVANTER) ÇİZİMİ
         foreach (Transform child in collectionContainer) Destroy(child.gameObject);
-        foreach (ItemData item in PlayerDataManager.Instance.allUnlockedItems)
+
+        // Sadece kilidi açılmış (unlocked) eşyaları değil, envanterde olanları göster
+        // Veya unlocked olup adedi 0 olanları "gri" gösterebilirsin.
+        foreach (ItemData item in PlayerDataManager.Instance.unlockedItemsPool)
         {
             GameObject newSlot = Instantiate(slotPrefab, collectionContainer);
             DeckSlotUI script = newSlot.GetComponent<DeckSlotUI>();
 
-            // Koleksiyonda miktar önemsiz (1 gösterelim veya gizleyelim)
-            script.Setup(item, 1, -1, this);
+            // HESAPLAMA:
+            int totalOwned = PlayerDataManager.Instance.GetStock(item);
+            int usedInDeck = PlayerDataManager.Instance.GetUsedInDeckCount(item);
+            int available = totalOwned - usedInDeck;
+
+            // Slot'a "Kullanılabilir / Toplam" bilgisini gönder
+            script.Setup(item, available, -1, this);
+
+            // Eğer elimizde kalmadıysa (Available 0 ise) butonu pasif yap veya grileştir
+            if (available <= 0)
+            {
+                script.iconImage.color = Color.gray; // Sönük olsun
+                // script.button.interactable = false; // Tıklanmasın istersen
+            }
         }
 
         UpdateBudgetDisplay();
@@ -127,7 +148,16 @@ public class DeckMenuManager : MonoBehaviour
 
         // Eğer slot doluysa, içindeki ne?
         ItemStack existingStack = isSlotEmpty ? null : deck[slotIndex];
+        // KONTROL: Elimizde bu eşyadan kaldı mı?
+        int totalOwned = PlayerDataManager.Instance.GetStock(newItem);
+        int usedInDeck = PlayerDataManager.Instance.GetUsedInDeckCount(newItem);
 
+        if (usedInDeck >= totalOwned)
+        {
+            Debug.LogWarning("Stokta kalmadı! Toptancıya git.");
+            // Bir uyarı popup'ı açabilirsin
+            return;
+        }
         // SENARYO 1: Slot Boş -> Yeni Ekle (1 Adet)
         if (isSlotEmpty)
         {
