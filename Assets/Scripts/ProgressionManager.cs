@@ -16,6 +16,7 @@ public class ProgressionManager : MonoBehaviour
     {
         if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); }
         else { Destroy(gameObject); }
+        maxUnlockedLvlIndex = PlayerDataManager.Instance.maxLevelReached;
     }
 
     // Level Seçip Başlatma
@@ -64,7 +65,7 @@ public class ProgressionManager : MonoBehaviour
         if (completedLevelIndex >= maxUnlockedLvlIndex)
         {
             maxUnlockedLvlIndex = completedLevelIndex + 1;
-
+            PlayerDataManager.Instance.maxLevelReached = maxUnlockedLvlIndex;
             // Eğer toplam level sayısını aştıysak sınırla (GameProgressionManager'dan kontrol edebilirsin)
             if (ProgressionManager.Instance != null)
             {
@@ -74,7 +75,7 @@ public class ProgressionManager : MonoBehaviour
             }
 
             Debug.Log($"İLERLEME KAYDEDİLDİ: Artık Level {maxUnlockedLvlIndex + 1} açık!");
-            // SaveSystem.Save(); // İleride buraya save kodu gelecek
+            PlayerDataManager.Instance.SaveGame();
         }
     }
 }

@@ -13,10 +13,19 @@ MonoBehaviour:
   m_Name: Hamster
   m_EditorClassIdentifier: 
   itemName: Hamster
+  itemID: 1002
+  shootSound: {fileID: 0}
+  impactSound: {fileID: 0}
+  specialEffectSound: {fileID: 0}
   projectilePrefab: {fileID: 3802109556579512759, guid: 6affe61d0d6edcb46b97200b292da26a, type: 3}
   itemIcon: {fileID: -3257515335671204596, guid: a38269c46ca0ced4db9bdd555c8b94c3, type: 3}
+  unlockCost: 500
+  wholesaleBaseCost: 50
   damage: 15
   baseCooldown: 0.7
   budgetCost: 3
   destroyTimer: 3
   speed: 25
+  damageGrowthPercent: 0.1
+  cdReductionPer5Levels: 0.05
+  baseXPCost: 50

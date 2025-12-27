@@ -13,10 +13,19 @@ MonoBehaviour:
   m_Name: Lemon
   m_EditorClassIdentifier: 
   itemName: Lemon
+  itemID: 1001
+  shootSound: {fileID: 0}
+  impactSound: {fileID: 0}
+  specialEffectSound: {fileID: 0}
   projectilePrefab: {fileID: 979244849844172104, guid: feba38e2aca454d4ca2ff4d0813c73fc, type: 3}
   itemIcon: {fileID: -7882624808690415616, guid: 3a81faa4c037ebc49923145a4e66fb25, type: 3}
+  unlockCost: 500
+  wholesaleBaseCost: 50
   damage: 3
   baseCooldown: 0.1
   budgetCost: 1
   destroyTimer: 3
   speed: 10
+  damageGrowthPercent: 0.1
+  cdReductionPer5Levels: 0.05
+  baseXPCost: 50

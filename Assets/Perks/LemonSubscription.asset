@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: LemonSubscription
   m_EditorClassIdentifier: 
   perkName: "Lemon \xC7uval\u0131"
-  description: "Her seviye atlad\u0131\u011F\u0131nda %40 ihtimalle destene bir limon
-    ekler(Bu limon kal\u0131c\u0131 de\u011Fildir)"
+  itemID: 2001
+  description: "Her seviye atlad\u0131\u011F\u0131nda %40 ihtimalle destene ge\xE7ici
+    bir limon ekler ve Yap\u0131lan her at\u0131\u015Fta 1 Sar\u0131 kula elde edersin."
   icon: {fileID: -7882624808690415616, guid: 3a81faa4c037ebc49923145a4e66fb25, type: 3}
   unlockCost: 0
+  requiredLevel: 1
   itemToGive: {fileID: 11400000, guid: b6c618ad379ca45428d6092fcdd99ba2, type: 2}
   amount: 1
+  doesEcon: 1

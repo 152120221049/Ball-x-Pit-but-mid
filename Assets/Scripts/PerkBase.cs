@@ -4,6 +4,7 @@ public abstract class PerkBase : ScriptableObject
 {
     [Header("Görsel Bilgiler")]
     public string perkName;
+    public string itemID; 
     [TextArea] public string description;
     public Sprite icon;
     public int unlockCost;

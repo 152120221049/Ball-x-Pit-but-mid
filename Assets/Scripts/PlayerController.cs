@@ -1,19 +1,22 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
+public enum ControlMode { DualInput, HybridJoystick }
+
 public class PlayerController : MonoBehaviour
 {
+    [Header("Sistem Ayarları")]
+    public ControlMode currentMode = ControlMode.HybridJoystick;
+    public bool isAutoFire = true;
+    public RectTransform thresholdRing;
     [Header("Hareket Ayarları")]
     public float moveSpeed = 5f;
     public float turnSpeed = 720f;
+    [Range(0f, 0.5f)] public float movementSmoothing = 0.1f;
 
-    [Range(0f, 0.5f)]
-    public float movementSmoothing = 0.1f;
-
-    [Header("Görsel Ayarlar (Juice)")]
-    public float bobbingSpeed = 15f;
-    public float bobbingAmount = 0.1f;
-    public float rotationOffset = -90f;
+    [Header("Hybrid Joystick Ayarları")]
+    [Tooltip("Joystick merkezinden ne kadar uzaklaşınca hareket başlasın?")]
+    public float moveThreshold = 0.5f;
 
     [Header("Aim Ayarları")]
     public float minAimAngle = -10f;
@@ -27,149 +30,161 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb;
     private Vector2 moveInput;
+    private Vector2 lastAimDir = Vector2.up;
     private bool inAimMode = false;
-
     private Vector2 currentVelocityRef;
+    private WeaponSystem weaponSystem;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        weaponSystem = GetComponent<WeaponSystem>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
+        UpdateControlSettings();
     }
+    public void UpdateControlSettings()
+    {
+        if (PlayerDataManager.Instance == null) return;
 
+        // Ayarı Manager'dan al
+        currentMode = PlayerDataManager.Instance.currentControlMode;
+
+        // Joystick görselini ayarla
+        RectTransform joystickRect = movementJoystick.GetComponent<RectTransform>();
+        if (currentMode == ControlMode.HybridJoystick)
+        {
+            joystickRect.localScale = Vector3.one * 1.5f;
+            moveThreshold = 0.6f;
+            isAutoFire = true;
+            if (thresholdRing != null)
+            {
+                thresholdRing.gameObject.SetActive(true);
+                thresholdRing.localScale = Vector3.one * moveThreshold;
+            }
+        }
+        else
+        {
+            joystickRect.localScale = Vector3.one;
+            moveThreshold = 0.1f;
+            isAutoFire = false; // 
+            if (thresholdRing != null)
+            {
+                thresholdRing.gameObject.SetActive(false);
+
+            }
+        }
+    }
     void Update()
     {
-        ReadMovementInput();
-        ReadAimInput();
+        HandleInput();
 
         bool isMoving = moveInput.magnitude > 0.1f;
-
-        if (animator != null)
-            animator.SetBool("isWalking", isMoving);
+        if (animator != null) animator.SetBool("isWalking", isMoving);
 
         HandleBobbing(isMoving);
+        HandleFiring();
+    }
 
-        // --- ROTATION ---
-        if (inAimMode)
+    void HandleInput()
+    {
+        float inputMag = movementJoystick.Direction.magnitude;
+
+        if (currentMode == ControlMode.HybridJoystick)
         {
-            HandleAimingRotation();
-            return;  // Movement rotasyonunu tamamen engelliyoruz
+            // --- HYBRID JOYSTICK MANTIĞI ---
+            if (inputMag > 0.05f) // Çok küçük bir ölü bölge
+            {
+                // Her zaman nişan al (İç halka)
+                lastAimDir = movementJoystick.Direction.normalized;
+                HandleAimingRotation(lastAimDir);
+
+                // Eğer dış halkaya çıktıysa hareket et
+                if (inputMag > moveThreshold)
+                    moveInput = movementJoystick.Direction.normalized;
+                else
+                    moveInput = Vector2.zero;
+            }
+            else
+            {
+                moveInput = Vector2.zero;
+            }
         }
-
-        if (isMoving)
+        else
         {
-            HandleMovementRotation();
+            // --- ESKİ SİSTEM (Dual Input) ---
+            ReadMovementInput();
+            ReadAimInput(); // Ekrana dokunma ile nişan
         }
     }
 
+    void HandleAimingRotation(Vector2 aimDir)
+    {
+        float angle = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
+        float clampedAngle = Mathf.Clamp(angle, minAimAngle, maxAimAngle);
+
+        firePoint.rotation = Quaternion.Euler(0, 0, clampedAngle);
+        visuals.rotation = Quaternion.Euler(0, 0, clampedAngle + -90f);
+    }
+
+    void HandleFiring()
+    {
+        if (currentMode == ControlMode.HybridJoystick)
+        {
+            // 1. Durum: Auto-Fire AÇIK (Default)
+            // Joystick merkezden azıcık bile ayrıldıysa sürekli ateş et
+            if (isAutoFire)
+            {
+                weaponSystem.TryFire();        
+            }
+            // 2. Durum: Auto-Fire KAPALI
+            // Kullanıcı nişan alırken EKSTRA olarak ekrana basarsa ateş et
+            else
+            {
+                if (Input.GetMouseButton(0) && !IsPointerOverUI())
+                {
+                    weaponSystem.TryFire();
+                }
+            }
+        }
+    }
     void FixedUpdate()
     {
         Vector2 targetVelocity = moveInput * moveSpeed;
         rb.linearVelocity = Vector2.SmoothDamp(rb.linearVelocity, targetVelocity, ref currentVelocityRef, movementSmoothing);
     }
 
-    // -----------------------------------------------------
-    //                    MOVEMENT INPUT
-    // -----------------------------------------------------
+    // --- ESKİ METODLARIN ADAPTASYONU ---
     void ReadMovementInput()
     {
-        float h = movementJoystick.Horizontal;
-        float v = movementJoystick.Vertical;
-
-        if (Mathf.Abs(h) < 0.01f && Mathf.Abs(v) < 0.01f)
+        moveInput = movementJoystick.Direction.magnitude > 0.1f ? movementJoystick.Direction.normalized : Vector2.zero;
+        if (!inAimMode && moveInput != Vector2.zero)
         {
-            // PC test inputu
-            h = Input.GetAxis("Horizontal");
-            v = Input.GetAxis("Vertical");
+            float angle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
+            visuals.rotation = Quaternion.RotateTowards(visuals.rotation, Quaternion.Euler(0, 0, angle - 90f), turnSpeed * Time.deltaTime);
         }
-
-        moveInput = new Vector2(h, v);
-
-        // deadzone
-        if (moveInput.magnitude < 0.1f)
-            moveInput = Vector2.zero;
-        else
-            moveInput = moveInput.normalized;
     }
 
-    // -----------------------------------------------------
-    //                     AIM INPUT
-    // -----------------------------------------------------
     void ReadAimInput()
     {
-        // Mouse veya dokunma başladı → aim mode ON
-        if (Input.GetMouseButtonDown(0) && !IsPointerOverUI())
+        if (Input.GetMouseButton(0) && !IsPointerOverUI())
+        {
             inAimMode = true;
-
-        // Parmak/mouse bırakıldı → aim mode OFF
-        if (Input.GetMouseButtonUp(0))
-            inAimMode = false;
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
+            HandleAimingRotation((mousePos - transform.position).normalized);
+        }
+        else inAimMode = false;
     }
 
-    // -----------------------------------------------------
-    //                MOVEMENT ROTATION
-    // -----------------------------------------------------
-    void HandleMovementRotation()
-    {
-        if (moveInput == Vector2.zero) return;
-
-        float angle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
-
-        Quaternion targetRot = Quaternion.Euler(0, 0, angle + rotationOffset);
-
-        visuals.rotation = Quaternion.RotateTowards(
-            visuals.rotation,
-            targetRot,
-            turnSpeed * Time.deltaTime
-        );
-    }
-
-    // -----------------------------------------------------
-    //                    AIM ROTATION
-    // -----------------------------------------------------
-    void HandleAimingRotation()
-    {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
-
-        Vector3 aimDir = mousePos - transform.position;
-        float angle = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
-
-        float clampedAngle = Mathf.Clamp(angle, minAimAngle, maxAimAngle);
-
-        // Firepoint her zaman aim angle ile döner
-        firePoint.rotation = Quaternion.Euler(0, 0, clampedAngle);
-
-        // Aim sırasında visuals sadece firePoint’e göre offsetlenir
-        visuals.rotation = Quaternion.Euler(0, 0, clampedAngle + rotationOffset);
-    }
-
-    // -----------------------------------------------------
-    //                       BOBBING
-    // -----------------------------------------------------
     void HandleBobbing(bool isMoving)
     {
         if (isMoving)
         {
-            float bob = Mathf.Sin(Time.time * bobbingSpeed) * bobbingAmount;
+            float bob = Mathf.Sin(Time.time * 15f) * 0.1f;
             visuals.localScale = new Vector3(1 + bob, 1 - bob, 1);
         }
-        else
-        {
-            visuals.localScale = Vector3.Lerp(visuals.localScale, Vector3.one, Time.deltaTime * 10f);
-        }
+        else visuals.localScale = Vector3.Lerp(visuals.localScale, Vector3.one, Time.deltaTime * 10f);
     }
 
-    // -----------------------------------------------------
-    //                 UI TOUCH CHECK
-    // -----------------------------------------------------
-    bool IsPointerOverUI()
-    {
-        if (Input.touchCount > 0)
-        {
-            Touch t = Input.GetTouch(0);
-            return EventSystem.current.IsPointerOverGameObject(t.fingerId);
-        }
-        return EventSystem.current.IsPointerOverGameObject();
-    }
+    bool IsPointerOverUI() => EventSystem.current.IsPointerOverGameObject();
 }

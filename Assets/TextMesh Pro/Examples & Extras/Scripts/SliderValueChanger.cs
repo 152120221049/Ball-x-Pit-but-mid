@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro; // or using UnityEngine.UI; for legacy Text
 using UnityEngine.UI;
 public class SliderValueDisplay : MonoBehaviour
@@ -8,10 +8,8 @@ public class SliderValueDisplay : MonoBehaviour
 
     void Start()
     {
-       
-        volumeSlider.onValueChanged.AddListener(UpdateText);
-
         
+        volumeSlider.onValueChanged.AddListener(UpdateText);
         UpdateText(volumeSlider.value);
     }
 

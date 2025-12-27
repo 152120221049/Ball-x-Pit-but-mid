@@ -174,7 +174,7 @@ public class MergeManager : MonoBehaviour
             PlayerDataManager.Instance.AddStock(currentRecipe.resultItem, 1);
 
             Debug.Log($"BAŞARILI! Yeni Eşya: {currentRecipe.resultItem.itemName}");
-
+            PlayerDataManager.Instance.SaveGame();
             // Efekt
             if (resultImage != null) resultImage.transform.DOPunchScale(Vector3.one * 0.5f, 0.3f);
 

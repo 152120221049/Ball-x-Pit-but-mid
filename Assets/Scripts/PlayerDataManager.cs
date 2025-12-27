@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq; // Listelerle çalışmak için gerekli
+using TMPro;
 using UnityEngine;
 
 public class PlayerDataManager : MonoBehaviour
@@ -10,13 +11,16 @@ public class PlayerDataManager : MonoBehaviour
     [Header("Ekonomi")]
     [SerializeField] private int bankedXP = 500; 
     public int maxBudget = 10;
-    public int currentBudgetUpgradeCost = 100; // Bütçeyi 10 -> 11 yapmak için gereken para
-    
+    public int currentBudgetUpgradeCost = 100; 
+    public ControlMode currentControlMode = ControlMode.HybridJoystick;
     public int BankedXp
     {
         get { return bankedXP; }
         set { bankedXP = value; }
     }
+    
+    private TextMeshProUGUI explanationText;
+
     [Header("Veritabanı (Tüm Eşyalar)")]
     // Inspector'dan oyunundaki BÜTÜN ItemData'ları buraya sürüklemelisin!
     public List<ItemData> gameAllItems;
@@ -42,15 +46,22 @@ public class PlayerDataManager : MonoBehaviour
 
     [Header("İlerleme")]
     public int maxLevelReached = 1; // Oyuncunun gördüğü en yüksek seviye
-
     // Seviye bittiğinde (GameResultManager'dan) bunu çağıracağız
-    
+    public void SetControlMode(ControlMode mode)
+    {
+        currentControlMode = mode;
+
+        // Sahnede bir player varsa anında haberdar et
+        PlayerController pc = GameObject.FindFirstObjectByType<PlayerController>();
+        if (pc != null) pc.UpdateControlSettings();
+        SaveGame();
+    }
     public void UpdateMaxLevel(int level)
     {
         if (level > maxLevelReached)
         {
             maxLevelReached = level;
-            
+            SaveGame();
         }
     }
 
@@ -66,6 +77,7 @@ public class PlayerDataManager : MonoBehaviour
             ownedPerks.Add(perk);
             Debug.Log($"{perk.perkName} Satın Alındı!");
             return true;
+            SaveGame();
         }
 
         return false; // Para yetmedi
@@ -96,6 +108,7 @@ public class PlayerDataManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            LoadGame();
         }
         else
         {
@@ -105,8 +118,8 @@ public class PlayerDataManager : MonoBehaviour
 
     void Start()
     {
-        // --- BAŞLANGIÇ TEST VERİSİ ---
-        // Eğer oyun ilk kez açılıyorsa ve hiç açık eşya yoksa:
+        
+        
         if (unlockedItemsPool.Count == 0 && gameAllItems.Count > 0)
         {
             // Örnek: İlk eşyayı (Muhtemelen Limon) aç ve 10 tane ver
@@ -123,17 +136,165 @@ public class PlayerDataManager : MonoBehaviour
                 AddStock(gameAllItems[2], 1);
             }
         }
+        explanationText = GameObject.Find("Canvas/SafeAreaPanel/SettingsPanel/ExplanationText")?.GetComponent<TextMeshProUGUI>();
+    }
+    void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            SaveGame();
+        }
     }
 
+    // Oyun tamamen kapatıldığında
+    void OnApplicationQuit()
+    {
+        SaveGame();
+    }
     // ========================================================================
     // --- EKONOMİ YÖNETİMİ ---
     // ========================================================================
+    public void SaveGame()
+    {
+        SaveData data = new SaveData();
 
+        // 1. Basit Veriler
+        data.bankedXP = bankedXP;
+        data.maxBudget = maxBudget;
+        data.budgetUpgradeCost = currentBudgetUpgradeCost;
+        data.controlModeIndex = (int)currentControlMode;
+        data.maxLevelReached = ProgressionManager.Instance.maxUnlockedLvlIndex;
+
+        // 2. Eşyaları Kaydet (Stok, Level, Kilit Durumu)
+        // Oyundaki TÜM eşyaları tarıyoruz
+        foreach (ItemData item in gameAllItems)
+        {
+            if (item == null) continue;
+
+            bool isUnlocked = unlockedItemsPool.Contains(item);
+            int stock = itemStock.ContainsKey(item) ? itemStock[item] : 0;
+            int level = itemLevels.ContainsKey(item) ? itemLevels[item] : 1;
+
+            // Sadece bir etkileşimimiz olanları kaydetsek yeter (Dosya boyutu için)
+            // Ama garanti olsun diye hepsini veya en azından açık olanları kaydedebiliriz.
+            if (isUnlocked || stock > 0 || level > 1)
+            {
+                data.savedItems.Add(new SavedItemEntry(item.itemID, isUnlocked, stock, level));
+            }
+        }
+
+        // 3. Desteyi Kaydet
+        foreach (ItemStack stack in currentDeck)
+        {
+            if (stack.itemData != null)
+            {
+                data.savedDeck.Add(new SavedDeckEntry(stack.itemData.itemID, stack.amount));
+            }
+        }
+
+        // 4. Perkleri Kaydet
+        // Not: PerkBase scriptinde 'perkID' olduğunu varsayıyorum. Yoksa 'name' kullanabilirsin.
+        foreach (PerkBase perk in ownedPerks)
+        {
+            data.ownedPerkIDs.Add(perk.perkName); // Veya perk.perkID
+        }
+        foreach (PerkBase perk in equippedPerks)
+        {
+            data.equippedPerkIDs.Add(perk.perkName); // Veya perk.perkID
+        }
+
+        // 5. Dosyaya Yaz
+        SaveSystem.Save(data);
+        Debug.Log("Oyun Kaydedildi.");
+    }
+
+    public void LoadGame()
+    {
+        SaveData data = SaveSystem.Load();
+
+        
+        if (data == null) return;
+
+        
+        bankedXP = data.bankedXP;
+        maxBudget = data.maxBudget;
+        currentBudgetUpgradeCost = data.budgetUpgradeCost;
+        maxLevelReached = data.maxLevelReached;
+
+        SetControlMode((ControlMode)data.controlModeIndex);
+
+     
+        unlockedItemsPool.Clear();
+        itemStock.Clear();
+        itemLevels.Clear();
+        currentDeck.Clear();
+        ownedPerks.Clear();
+        equippedPerks.Clear();
+
+        foreach (SavedItemEntry entry in data.savedItems)
+        {
+            
+            ItemData originalItem = gameAllItems.Find(x => x.itemID == entry.itemID);
+
+            if (originalItem != null)
+            {
+                
+                if (entry.isUnlocked) unlockedItemsPool.Add(originalItem);
+
+                
+                if (entry.stock > 0) itemStock.Add(originalItem, entry.stock);
+
+                
+                if (entry.level > 1) itemLevels.Add(originalItem, entry.level);
+            }
+        }
+
+        
+        foreach (SavedDeckEntry deckEntry in data.savedDeck)
+        {
+            ItemData originalItem = gameAllItems.Find(x => x.itemID == deckEntry.itemID);
+            if (originalItem != null)
+            {
+                ItemStack newStack = new ItemStack();
+                newStack.itemData = originalItem;
+                newStack.amount = deckEntry.amount;
+                
+                currentDeck.Add(newStack);
+            }
+        }
+
+        
+        if (allPerksPool != null)
+        {
+            // Sahip olunanlar
+            foreach (string id in data.ownedPerkIDs)
+            {
+                PerkBase originalPerk = allPerksPool.Find(p => p.perkName == id);
+                if (originalPerk != null) ownedPerks.Add(originalPerk);
+            }
+
+            // Kuşanılanlar
+            foreach (string id in data.equippedPerkIDs)
+            {
+                PerkBase originalPerk = allPerksPool.Find(p => p.perkName == id);
+                if (originalPerk != null && equippedPerks.Count < maxPerkSlots)
+                {
+                    equippedPerks.Add(originalPerk);
+                }
+            }
+        }
+
+        // UI Güncelleme (XP değiştiği için event tetikleyelim)
+        OnXpChanged?.Invoke(bankedXP);
+
+        Debug.Log("Oyun Yüklendi.");
+    }
     public void AddBankedXP(int amount)
     {
         bankedXP += amount;
         Debug.Log("<color=blue>Veri Güncellendi: </color>" + bankedXP);
         OnXpChanged?.Invoke(bankedXP);
+        SaveGame();
     }
 
     public bool TrySpendXP(int amount)
@@ -143,6 +304,7 @@ public class PlayerDataManager : MonoBehaviour
             bankedXP -= amount;
             Debug.Log("<color=red>Harcama Yapıldı: </color>" + bankedXP);
             OnXpChanged?.Invoke(bankedXP);
+            SaveGame();
             return true; 
         }
         return false; // Yetersiz bakiye
@@ -153,6 +315,7 @@ public class PlayerDataManager : MonoBehaviour
         maxBudget++;
         // Fiyatı her seferinde %50 artır (Zorlaşsın)
         currentBudgetUpgradeCost = Mathf.RoundToInt(currentBudgetUpgradeCost * 1.5f);
+        SaveGame();
     }
 
     // ========================================================================
@@ -213,6 +376,7 @@ public class PlayerDataManager : MonoBehaviour
 
             // İlk açılış hediyesi olarak 1 tane stok verelim mi? (İsteğe bağlı)
             AddStock(item, 1);
+            SaveGame();
         }
     }
 
@@ -285,6 +449,7 @@ public class PlayerDataManager : MonoBehaviour
             }
 
             Debug.Log($"{item.itemName} Yükseltildi! Yeni Seviye: {itemLevels[item]}");
+            SaveGame();
             return true;
         }
 

@@ -40,8 +40,8 @@ public class ShopManager : MonoBehaviour
     public void RefreshAllShops()
     {
         UpdateMoneyUI();
-        GenerateUnlockShop(); // Üst kısım
-        GenerateWholesaler(); // Alt kısım
+        GenerateUnlockShop(); 
+        GenerateWholesaler(); 
     }
 
     void UpdateMoneyUI()
@@ -80,6 +80,7 @@ public class ShopManager : MonoBehaviour
 
             // Efekt ve Yenileme
             slotObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.2f).OnComplete(() => RefreshAllShops());
+            PlayerDataManager.Instance.SaveGame();
         }
         else
         {
@@ -125,6 +126,7 @@ public class ShopManager : MonoBehaviour
 
             // Efekt ve Yenileme (Fiyat artacağı için yenilemek lazım)
             slotObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.2f).OnComplete(() => RefreshAllShops());
+            PlayerDataManager.Instance.SaveGame();
         }
         else
         {

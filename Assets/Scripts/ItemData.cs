@@ -4,7 +4,7 @@
 public class ItemData : ScriptableObject
 {
     public string itemName;
-
+    public string itemID; 
     [Header("Ses Efektleri")]
     public AudioClip shootSound;      // Atış sesi
     public AudioClip impactSound;     // Merminin bir yere çarpma/sekme sesi

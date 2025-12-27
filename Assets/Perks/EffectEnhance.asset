@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: EffectEnhance
   m_EditorClassIdentifier: 
   perkName: "Maksimum de\u011Fer"
+  itemID: 2002
   description: "Her seviye atlad\u0131\u011F\u0131nda %50 \u015Fansla e\u015Fyalar\u0131n
     efektler(Dondurma hasr art\u0131rma y\xFCzdesi,veya y\u0131ld\u0131r\u0131m\u0131n
     normal hasra y\xFCzdesi vs)%30 artar."

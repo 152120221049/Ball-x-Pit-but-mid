@@ -5,12 +5,12 @@ using DG.Tweening;
 public class PerkMenuManager : MonoBehaviour
 {
     [Header("Market Kısmı (Aşağısı)")]
-    public GameObject marketSlotPrefab; // Eski butonlu prefab
-    public Transform marketContainer;   // Grid Layout (Tüm perkler)
+    public GameObject marketSlotPrefab; 
+    public Transform marketContainer;   
 
     [Header("Kuşanılanlar Kısmı (Yukarısı)")]
-    public GameObject equippedSlotPrefab; // YENİ: Butonsuz prefab
-    public Transform equippedContainer;   // YENİ: Horizontal Layout (Sadece seçilenler)
+    public GameObject equippedSlotPrefab; 
+    public Transform equippedContainer;   
 
     void OnEnable()
     {
@@ -18,14 +18,14 @@ public class PerkMenuManager : MonoBehaviour
         else Invoke(nameof(OnEnable), 0.1f);
     }
 
-    // Her şeyi yenileyen ana fonksiyon
+    
     void RefreshUI()
     {
         RefreshMarket();
         RefreshEquipped();
     }
 
-    // 1. AŞAĞIYI YENİLE (Eski Kodun Benzeri)
+   
     void RefreshMarket()
     {
         foreach (Transform child in marketContainer) Destroy(child.gameObject);

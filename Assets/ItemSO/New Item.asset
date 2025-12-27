@@ -10,22 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c927e2e182e3e1240a99065888eab911, type: 3}
-  m_Name: TeslaOrb
+  m_Name: New Item
   m_EditorClassIdentifier: 
-  itemName: TeslaOrb
-  itemID: 1004
+  itemName: Fan
   shootSound: {fileID: 0}
   impactSound: {fileID: 0}
   specialEffectSound: {fileID: 0}
-  projectilePrefab: {fileID: 8563278997864507222, guid: 7c063659c073e9541aef2b910513f787, type: 3}
-  itemIcon: {fileID: 8788996360218983808, guid: 9290b888b6de5da4883a23dbbced9014, type: 3}
+  projectilePrefab: {fileID: 0}
+  itemIcon: {fileID: 0}
   unlockCost: 500
   wholesaleBaseCost: 50
-  damage: 10
-  baseCooldown: 0.8
-  budgetCost: 4
+  damage: 3
+  baseCooldown: 0.1
+  budgetCost: 1
   destroyTimer: 3
-  speed: 3
+  speed: 10
   damageGrowthPercent: 0.1
   cdReductionPer5Levels: 0.05
   baseXPCost: 50

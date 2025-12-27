@@ -3,94 +3,104 @@ using System.Collections.Generic;
 
 public abstract class ProjectileEffects : MonoBehaviour
 {
-    [Header("Veri")]
-    public ItemData projectileData; // Hasar ve Hız buradan çekilecek
+    [Header("Ayarlar")]
+    public ItemData projectileData;
 
-    // Bu değişkeni çocuklar (Hamster vb.) kullanacak
-    protected float finalDamage;
+    // Eski scriptindeki 'isSingleUse' mantığını buraya taşıdık.
+    // true ise: Çarptığı an yok olur (Örn: Domates)
+    // false ise: İçinden geçer veya seker (Örn: Tesla, Fan)
+    public bool isSingleUse = true;
+
+    [HideInInspector] public float finalDamage;
 
     protected Rigidbody2D rb;
-    [Header("Duvar Davranışı")]
-    public bool duvardaYokOl = false;
+
+    // --- Fan Mermisi İçin Gerekli Değişken ---
+    [HideInInspector] public bool isBuffedByFan = false;
+
     protected virtual void Start()
     {
         rb = GetComponent<Rigidbody2D>();
 
         if (projectileData != null)
         {
-            // 1. HIZ HESABI (Cooldown Reduction hızı etkilemez, sadece atış sıklığını etkiler)
             float speed = projectileData.speed;
 
-            // --- HASAR HESABI (KRİTİK BÖLGE) ---
+            // --- 1. HASAR HESABI (Senin eski kodun aynısı) ---
             float baseDamage = 0;
-
-            // Eğer DataManager varsa (Oyundaysak), YÜKSELTİLMİŞ hasarı sor
             if (PlayerDataManager.Instance != null)
-            {
                 baseDamage = PlayerDataManager.Instance.GetModifiedDamage(projectileData);
-                // Debug.Log($"Modifiye Hasar Alındı: {baseDamage} (Level: {PlayerDataManager.Instance.GetItemLevel(projectileData)})");
-            }
             else
-            {
-                // Yoksa (Test) düz hasarı al
                 baseDamage = projectileData.damage;
-            }
 
-            // 2. Level Çarpanı (Oyun içi Bufflar) ile çarp
-            float levelMultiplier = (LevelManager.Instance != null) ? LevelManager.Instance.damageMultiplier : 1f;
+            // --- 2. LEVEL BUFFLARI ---
+            float levelBuffMultiplier = (LevelManager.Instance != null) ? LevelManager.Instance.damageMultiplier : 1f;
 
-            finalDamage = baseDamage * levelMultiplier;
-            // -----------------------------------
+            finalDamage = baseDamage * levelBuffMultiplier;
+            // ---------------------------------------------
 
+            // Hız ver
             if (rb != null) rb.linearVelocity = transform.right * speed;
+
+            // Eğer çarpınca yok olmuyorsa (Tesla gibi), süreyle yok olsun
+            if (!isSingleUse)
+            {
+                float timer = projectileData.destroyTimer > 0 ? projectileData.destroyTimer : 5f;
+                Destroy(gameObject, timer);
+            }
         }
         else
         {
-            // Eğer veri yoksa hata vermemesi için
-            finalDamage = 10f;
+            finalDamage = 10f; // Güvenlik
         }
     }
 
-    // --- ÇARPIŞMA (Aynı kalıyor) ---
-    protected virtual void OnCollisionEnter2D(Collision2D collision)
+    // --- ÇARPIŞMA MANTIĞI ---
+    protected virtual void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.gameObject.CompareTag("Enemy"))
+        // Not: Physics Matrix ayarını yaptığımız için Trigger kullanıyoruz.
+        // Eğer Matrix ayarı yapmadıysan OnCollisionEnter2D kullanabilirsin.
+
+        if (other.CompareTag("Enemy"))
         {
-            EnemyBase enemy = collision.gameObject.GetComponent<EnemyBase>();
-            if (enemy != null) OnHitEnemy(enemy);
+            EnemyBase enemy = other.GetComponent<EnemyBase>();
+            if (enemy != null)
+            {
+                OnHitEnemy(enemy);
+            }
         }
-        else if (collision.gameObject.CompareTag("Obstacles"))
+        else if (other.CompareTag("Obstacles")) // Duvar vb.
         {
             OnHitWall();
         }
     }
 
-    // --- TEMEL VURUŞ ---
+    // --- VURUŞ FONKSİYONU ---
     protected virtual void OnHitEnemy(EnemyBase enemy)
     {
-        if (duvardaYokOl) 
-        { 
-            enemy.TakeDamage(finalDamage);
-            Destroy(gameObject);
-        }
-        else
+        // 1. Hasar ver
+        enemy.TakeDamage(finalDamage);
+
+        // 2. Varsa Özel Efekti Çalıştır (Inheritance ile gelen kısım)
+        ApplyUniqueEffect(enemy);
+
+        // 3. Eğer tek kullanımlıksa yok et
+        if (isSingleUse)
         {
-            enemy.TakeDamage(finalDamage);
-            Destroy(gameObject,projectileData.destroyTimer); 
+            Destroy(gameObject);
         }
     }
 
     protected virtual void OnHitWall()
     {
-        if (duvardaYokOl)
-        {
-            
-            Destroy(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject, projectileData.destroyTimer);
-        }
+        if (isSingleUse) Destroy(gameObject);
+    }
+
+    // --- MİRAS ALANLARIN DOLDURACAĞI FONKSİYON ---
+    public virtual void ApplyUniqueEffect(EnemyBase target)
+    {
+        // Varsayılan olarak boş.
+        // Standart mermi burayı boş bırakır.
     }
 
     // ========================================================================

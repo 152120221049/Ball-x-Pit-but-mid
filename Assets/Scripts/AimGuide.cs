@@ -8,14 +8,12 @@ public class AimGuide : MonoBehaviour
     public float maxDistance = 20f;
     public LayerMask collisionLayer;
 
-    // --- YENİ EKLENEN AYAR ---
     [Range(0f, 2f)]
-    public float reticleOffset = 0.5f; // Sembolü ne kadar geri çekeceğiz?
-    // -------------------------
+    public float reticleOffset = 0.5f;
 
     [Header("Referanslar")]
     public Joystick movementJoystick;
-    public Transform targetReticle;
+    public Transform targetReticle; // Sembol (Reticle) objesi
 
     private LineRenderer lineRenderer;
     private bool isAiming = false;
@@ -48,70 +46,63 @@ public class AimGuide : MonoBehaviour
 
     void CheckAimInput()
     {
-        // (Burası aynı kalıyor - Joystick kontrolü vb.)
-        isAiming = false;
+        if (PlayerDataManager.Instance == null) return;
 
-        if (movementJoystick != null && movementJoystick.Direction.magnitude > 0.1f) return;
+        ControlMode currentMode = PlayerDataManager.Instance.currentControlMode;
 
-        if (Input.touchCount > 0)
+        if (currentMode == ControlMode.HybridJoystick)
         {
-            foreach (Touch touch in Input.touches)
+            // --- HİBRİT MOD: ÇİZGİ VE RETICLE HER ZAMAN AKTİF ---
+            isAiming = true;
+        }
+        else
+        {
+            // --- DUAL MOD: SADECE DOKUNUNCA AKTİF ---
+            isAiming = false;
+
+            // Joystick ile yürürken çizgi çıkmasın
+            if (movementJoystick.Direction.magnitude > 0.1f) return;
+
+            if (Input.touchCount > 0)
             {
-                int id = touch.fingerId;
-                if (!EventSystem.current.IsPointerOverGameObject(id))
+                foreach (Touch touch in Input.touches)
                 {
-                    isAiming = true;
-                    break;
+                    if (!EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                    {
+                        isAiming = true;
+                        break;
+                    }
                 }
             }
-        }
-        else if (Input.GetMouseButton(0))
-        {
-            if (!EventSystem.current.IsPointerOverGameObject()) isAiming = true;
+            else if (Input.GetMouseButton(0))
+            {
+                if (!EventSystem.current.IsPointerOverGameObject()) isAiming = true;
+            }
         }
     }
 
-    // --- GÜNCELLENEN KISIM ---
     void DrawAimLine()
     {
         lineRenderer.SetPosition(0, firePoint.position);
 
-        // Işın atıyoruz
         RaycastHit2D hit = Physics2D.Raycast(firePoint.position, firePoint.right, maxDistance, collisionLayer);
+        Vector3 hitPoint = hit.collider != null ? (Vector3)hit.point : firePoint.position + firePoint.right * maxDistance;
 
-        Vector3 hitPoint;
-
-        if (hit.collider != null)
-        {
-            hitPoint = hit.point;
-        }
-        else
-        {
-            // Boşa gidiyorsa
-            hitPoint = firePoint.position + firePoint.right * maxDistance;
-        }
-
-        // 1. Çizgiyi ayarla (Çizgi tam duvara kadar gitsin, onda sorun yok)
         lineRenderer.SetPosition(1, hitPoint);
 
-        // 2. Reticle'ı ayarla (Burası değişti)
         if (targetReticle != null)
         {
-            // Eğer bir şeye çarptıysak
             if (hit.collider != null)
             {
-                // Çarpma noktasından, merminin geldiği yönün TERSİNE (firePoint.right) doğru
-                // 'reticleOffset' kadar geri gel.
-                Vector3 offsetPosition = (Vector3)hit.point - (firePoint.right * reticleOffset);
-                targetReticle.position = offsetPosition;
+                // Çarpma noktasından biraz geri çek (Offset)
+                targetReticle.position = (Vector3)hit.point - (firePoint.right * reticleOffset);
             }
             else
             {
-                // Boşa gidiyorsa direkt uca koy
                 targetReticle.position = hitPoint;
             }
 
-            // Dönme efekti devam etsin
+            // Sembolü kendi ekseninde döndür
             targetReticle.Rotate(0, 0, 100 * Time.deltaTime);
         }
     }

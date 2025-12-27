@@ -35,6 +35,7 @@ public class EnemyBase : MonoBehaviour
             originalColor = spriteRenderer.color; // Başlangıç rengini kaydet
 
         UpdateVisuals(); // İlk rengi ayarla
+        Invoke(nameof(CheckAndDestroyInvalidEnemy), 1f);
     }
 
     public void TakeDamage(float amount)
@@ -214,7 +215,18 @@ public class EnemyBase : MonoBehaviour
         // (Çünkü can azaldığı için renk değişmiş olmalı)
         UpdateVisuals();
     }
+    void CheckAndDestroyInvalidEnemy()
+    {
+        // Eğer X boyutu 0.1'den küçükse (gözükmüyorsa)
+        if (transform.localScale.x < 0.1f)
+        {
+            Debug.LogWarning($"{gameObject.name} hatalı boyutta (0) olduğu için yok edildi.");
 
+            // Eğer Pool kullanıyorsan: gameObject.SetActive(false);
+            // Pool kullanmıyorsan:
+            Destroy(gameObject);
+        }
+    }
     protected virtual void Die()
     {
         if (ExpOrbPrefab != null)

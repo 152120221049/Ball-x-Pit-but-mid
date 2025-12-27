@@ -13,10 +13,19 @@ MonoBehaviour:
   m_Name: IceCube
   m_EditorClassIdentifier: 
   itemName: Ice Cube
+  itemID: 1003
+  shootSound: {fileID: 0}
+  impactSound: {fileID: 0}
+  specialEffectSound: {fileID: 0}
   projectilePrefab: {fileID: 5415597901116731397, guid: e6102f4481d29514489117b2e3d44272, type: 3}
   itemIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  unlockCost: 500
+  wholesaleBaseCost: 50
   damage: 5
   baseCooldown: 0.4
   budgetCost: 3
   destroyTimer: 3
   speed: 10
+  damageGrowthPercent: 0.1
+  cdReductionPer5Levels: 0.05
+  baseXPCost: 50

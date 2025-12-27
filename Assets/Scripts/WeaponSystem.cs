@@ -19,6 +19,7 @@ public class WeaponSystem : MonoBehaviour
 
     [Header("Görsel Referanslar")]
     public SpriteRenderer reticleRenderer;
+    public GameObject aimGuide;
     public Image nextItemImage;
     public TMP_Text stackCountText;
     public Image autoFireImg;// Reticle üzerindeki "x3" yazısı (Opsiyonel)
@@ -67,13 +68,21 @@ public class WeaponSystem : MonoBehaviour
             currentCooldown -= Time.deltaTime;
         if (aimLockTimer > 0)
             aimLockTimer -= Time.deltaTime;
-        HandleTouchInput(); // Mobil İçin
-
+        if (PlayerDataManager.Instance != null && PlayerDataManager.Instance.currentControlMode == ControlMode.DualInput)
+        {
+            HandleTouchInput();
 #if UNITY_EDITOR
-        HandleMouseInput();
+            HandleMouseInput();
 #endif
+        }
     }
-
+    public void TryFire()
+    {
+        if (currentCooldown <= 0)
+        {
+            FireNextItem();
+        }
+    }
     void HandleTouchInput()
     {
         if (Input.touchCount > 0)
@@ -227,7 +236,15 @@ public class WeaponSystem : MonoBehaviour
         {
             projScript.projectileData = itemToFire;
         }
-
+        if (PlayerDataManager.Instance != null)
+        {
+            // Takılı olan tüm perkleri gez
+            foreach (PerkBase perk in PlayerDataManager.Instance.equippedPerks)
+            {
+                // "Ben ateş ettim, yapacağın bir şey var mı?" diye sor
+                perk.OnFire(this);
+            }
+        }
 
         float distToHome = Vector3.Distance(transform.position, homeTransform.position);
         float statsCD = 0;
@@ -306,28 +323,41 @@ public class WeaponSystem : MonoBehaviour
     }
     void UpdateVisuals()
     {
-        if (equippedBundles.Count == 0) return;
+        if (equippedBundles == null || equippedBundles.Count == 0) return;
 
+        // 1. MODA GÖRE NİŞANGAH (RETICLE) GÖRÜNÜRLÜĞÜ
+        if (reticleRenderer != null)
+        {
+            // Hibrit modda nişangah hep açık, Dual modda sadece ateş ederken/dokunurken
+            if (PlayerDataManager.Instance != null && PlayerDataManager.Instance.currentControlMode == ControlMode.HybridJoystick)
+            {
+                if (reticleRenderer != null && !reticleRenderer.enabled)
+                {
+                    aimGuide.SetActive(true);
+                }
+            }
+            // Dual modda görünürlük HandleTouchInput içinden veya ateş anında yönetilir.
+        }
+
+        // 2. GÜNCEL EŞYA VERİSİ
         ItemStack currentStack = equippedBundles[currentBundleIndex];
 
-      
+        // İkonu Güncelle
         if (reticleRenderer != null)
         {
             reticleRenderer.sprite = currentStack.itemData.itemIcon;
         }
 
-       
+        // 3. MİKTAR YAZISI (x5, x10 vb.)
         if (stackCountText != null)
         {
             int remainingInStack = currentStack.amount - currentSubIndex;
-           
+            // 1'den büyükse miktar yaz, değilse temizle
             stackCountText.text = remainingInStack > 1 ? $"x{remainingInStack}" : "";
         }
 
-       
-        int nextIndex = currentBundleIndex + 1;
-        if (nextIndex >= equippedBundles.Count) nextIndex = 0;
-
+        // 4. SIRADAKİ EŞYA GÖRSELİ (UI)
+        int nextIndex = (currentBundleIndex + 1) % equippedBundles.Count;
         if (nextItemImage != null)
         {
             nextItemImage.sprite = equippedBundles[nextIndex].itemData.itemIcon;
